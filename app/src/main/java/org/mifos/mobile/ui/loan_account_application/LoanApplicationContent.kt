@@ -1,0 +1,245 @@
+package org.mifos.mobile.ui.loan_account_application
+
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import org.mifos.mobile.R
+import org.mifos.mobile.core.ui.component.MifosDropDownTextField
+import org.mifos.mobile.core.ui.component.MifosTextTitleDescDrawableSingleLine
+import org.mifos.mobile.core.ui.component.MifosTextTitleDescSingleLine
+import org.mifos.mobile.core.ui.theme.MifosMobileTheme
+import org.mifos.mobile.utils.PresentOrFutureSelectableDates
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LoanApplicationContent(
+    modifier: Modifier = Modifier,
+    uiData: LoanApplicationScreenData,
+    selectProduct: (Int) -> Unit,
+    selectPurpose: (Int) -> Unit,
+    setDisbursementDate: (String) -> Unit,
+    setPrincipalAmount: (String) -> Unit,
+    reviewClicked: () -> Unit,
+) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    var purposeTextFieldEnable by rememberSaveable { mutableStateOf(false) }
+    var principalAmountError by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedLoanProductError by rememberSaveable { mutableStateOf<String?>(null) }
+    var expectedDisbursementDate by rememberSaveable { mutableStateOf(uiData.disbursementDate) }
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var selectedLoanProduct by rememberSaveable { mutableStateOf(uiData.selectedLoanProduct) }
+    var selectedLoanPurpose by rememberSaveable { mutableStateOf(uiData.selectedLoanPurpose) }
+    val datePickerState = rememberDatePickerState(selectableDates = PresentOrFutureSelectableDates)
+
+    LaunchedEffect(key1 = selectedLoanProduct) {
+        principalAmountError = null
+        selectedLoanProductError = null
+    }
+
+    LaunchedEffect(key1 = uiData.principalAmount) {
+        principalAmountError = null
+    }
+
+    Column(
+        modifier = modifier
+            .verticalScroll(scrollState)
+            .background(color = MaterialTheme.colorScheme.background)
+            .padding(16.dp)
+    ) {
+        Text(
+            style = MaterialTheme.typography.bodyMedium,
+            text = if (uiData.clientName != null) {
+                stringResource(
+                    id = R.string.string_and_string,
+                    stringResource(id = R.string.new_loan_application) + " ",
+                    uiData.clientName ?: "",
+                )
+            } else {
+                stringResource(id = R.string.loan_name)
+            },
+            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            style = MaterialTheme.typography.bodyMedium,
+            text = stringResource(
+                id = R.string.string_and_string,
+                stringResource(R.string.account_number) + " ",
+                uiData.accountNumber ?: "",
+            ),
+            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        MifosDropDownTextField(optionsList = uiData.listLoanProducts.filterNotNull(),
+            selectedOption = uiData.selectedLoanProduct,
+            supportingText = selectedLoanProductError ?: "",
+            error = selectedLoanProductError != null,
+            labelResId = R.string.select_loan_product,
+            onClick = { position, item ->
+                selectProduct(position)
+                selectedLoanProduct = item
+                purposeTextFieldEnable = true
+            }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MifosDropDownTextField(optionsList = uiData.listLoanPurpose.filterNotNull(),
+            selectedOption = uiData.selectedLoanPurpose,
+            isEnabled = purposeTextFieldEnable,
+            labelResId = R.string.purpose_of_loan,
+            onClick = { index, item ->
+                selectPurpose(index)
+                selectedLoanPurpose = item
+            }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = uiData.principalAmount ?: "",
+            onValueChange = { setPrincipalAmount(it) },
+            label = { Text(text = stringResource(id = R.string.principal_amount)) },
+            isError = principalAmountError != null,
+            modifier = Modifier.fillMaxWidth(),
+            supportingText = { if(principalAmountError != null) Text(text = principalAmountError!!) },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Number
+            ),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MifosTextTitleDescSingleLine(
+            title = stringResource(id = R.string.currency), description = uiData.currencyLabel ?: ""
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MifosTextTitleDescSingleLine(
+            title = stringResource(id = R.string.submission_date),
+            description = uiData.submittedDate ?: ""
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MifosTextTitleDescDrawableSingleLine(
+            title = stringResource(id = R.string.expected_disbursement_date),
+            description = expectedDisbursementDate ?: "",
+            imageResId = R.drawable.ic_edit_black_24dp,
+            imageSize = 24.dp,
+            onDrawableClick = { showDatePicker = true }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = {
+                selectedLoanProductError = null
+                principalAmountError = null
+                if(uiData.selectedLoanProduct.isNullOrBlank()) {
+                    selectedLoanProductError = context.getString(R.string.select_loan_product_field)
+                } else if(uiData.principalAmount.isNullOrBlank()) {
+                    principalAmountError = context.getString(R.string.enter_amount)
+                } else if(uiData.principalAmount == ".") {
+                    principalAmountError = context.getString(R.string.invalid_amount)
+                } else if(uiData.principalAmount.orEmpty().matches("^0*".toRegex())) {
+                    principalAmountError = context.getString(R.string.amount_greater_than_zero)
+                } else {
+                    reviewClicked()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = stringResource(id = R.string.review))
+        }
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val timeInMillis = datePickerState.selectedDateMillis
+                        val formattedDate = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(timeInMillis)
+                        expectedDisbursementDate = formattedDate
+                        setDisbursementDate(formattedDate)
+                        showDatePicker = false
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDatePicker = false }
+                ) { Text("Cancel") }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        )
+        {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    todayContentColor = MaterialTheme.colorScheme.primary,
+                    todayDateBorderColor = MaterialTheme.colorScheme.primary,
+                    selectedDayContainerColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+fun LoanAccountApplicationContentPreview() {
+    MifosMobileTheme {
+        LoanApplicationContent(uiData = LoanApplicationScreenData(),
+            selectProduct = { },
+            selectPurpose = { },
+            reviewClicked = { },
+            setDisbursementDate = { },
+            setPrincipalAmount = { }
+        )
+    }
+}

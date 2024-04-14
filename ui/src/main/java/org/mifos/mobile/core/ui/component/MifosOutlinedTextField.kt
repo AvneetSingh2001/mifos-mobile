@@ -11,6 +11,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -41,7 +42,12 @@ fun MifosOutlinedTextField(
     error: Boolean = false,
     supportingText: String,
     keyboardType: KeyboardType = KeyboardType.Text,
-    modifier: Modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    modifier: Modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(
+        focusedBorderColor = if (isSystemInDarkTheme()) Color(0xFF9bb1e3) else Color(0xFF325ca8)
+    )
 ) {
 
     OutlinedTextField(
@@ -63,11 +69,9 @@ fun MifosOutlinedTextField(
         trailingIcon = trailingIcon,
         maxLines = maxLines,
         singleLine = singleLine,
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            focusedBorderColor = if (isSystemInDarkTheme()) Color(
-                0xFF9bb1e3
-            ) else Color(0xFF325ca8)
-        ),
+        colors = colors,
+        enabled = enabled,
+        readOnly = readOnly,
         textStyle = LocalDensity.current.run {
             TextStyle(fontSize = 18.sp)
         },
