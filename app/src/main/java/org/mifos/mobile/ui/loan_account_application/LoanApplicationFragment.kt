@@ -69,7 +69,7 @@ class LoanApplicationFragment : BaseFragment() {
     private fun reviewNewLoanApplication() {
         val loansPayload = LoansPayload()
         loansPayload.clientId = viewModel.loanTemplate?.clientId
-        loansPayload.loanPurpose = viewModel.loanApplicationScreenData.value.selectedLoanPurpose
+        loansPayload.loanPurpose = viewModel.loanApplicationScreenData.value.selectedLoanPurpose ?: getString(R.string.loan_purpose_not_provided)
         loansPayload.productName = viewModel.loanApplicationScreenData.value.selectedLoanProduct
         loansPayload.currency = viewModel.loanApplicationScreenData.value.currencyLabel
         if (viewModel.purposeId > 0) loansPayload.loanPurposeId = viewModel.purposeId
@@ -115,7 +115,7 @@ class LoanApplicationFragment : BaseFragment() {
         loansPayload.principal =
             viewModel.loanApplicationScreenData.value.principalAmount?.toDouble() ?: 0.0
         loansPayload.productId = viewModel.productId
-        loansPayload.loanPurpose = viewModel.loanApplicationScreenData.value.selectedLoanPurpose
+        loansPayload.loanPurpose = viewModel.loanApplicationScreenData.value.selectedLoanPurpose ?: getString(R.string.loan_purpose_not_provided)
         loansPayload.productName = viewModel.loanApplicationScreenData.value.selectedLoanProduct
         loansPayload.currency = viewModel.loanApplicationScreenData.value.currencyLabel
         if (viewModel.purposeId > 0) loansPayload.loanPurposeId = viewModel.purposeId

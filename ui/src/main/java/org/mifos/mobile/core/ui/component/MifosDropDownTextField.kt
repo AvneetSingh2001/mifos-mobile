@@ -100,7 +100,7 @@ fun MifosDropDownTextField(
         DropdownMenu(
             expanded = expanded,
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.92f)
                 .heightIn(max = 200.dp),
             onDismissRequest = { expanded = false },
         ) {
