@@ -44,6 +44,7 @@ fun MifosOutlinedTextField(
     keyboardType: KeyboardType = KeyboardType.Text,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    imeAction: ImeAction = ImeAction.Next,
     modifier: Modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
     colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(
         focusedBorderColor = if (isSystemInDarkTheme()) Color(0xFF9bb1e3) else Color(0xFF325ca8)
@@ -76,7 +77,7 @@ fun MifosOutlinedTextField(
             TextStyle(fontSize = 18.sp)
         },
         keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Next,
+            imeAction = imeAction,
             keyboardType = keyboardType
             ),
         visualTransformation = visualTransformation,

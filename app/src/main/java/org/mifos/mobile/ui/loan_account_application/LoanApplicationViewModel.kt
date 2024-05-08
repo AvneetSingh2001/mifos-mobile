@@ -5,15 +5,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.mifos.mobile.R
 import org.mifos.mobile.models.accounts.loan.LoanWithAssociations
 import org.mifos.mobile.models.templates.loans.LoanTemplate
 import org.mifos.mobile.repositories.LoanRepository
 import org.mifos.mobile.ui.enums.LoanState
+import org.mifos.mobile.ui.loan_account_transaction.LoanAccountTransactionUiState
 import org.mifos.mobile.utils.DateHelper
+import org.mifos.mobile.utils.LoanUiState
+import org.mifos.mobile.utils.Result
+import org.mifos.mobile.utils.asResult
 import org.mifos.mobile.utils.getTodayFormatted
 import java.time.Instant
 import java.util.Locale
@@ -24,15 +31,14 @@ class LoanApplicationViewModel @Inject constructor(
     private val loanRepositoryImp: LoanRepository
 ) : ViewModel() {
 
-    private val _loanUiState = MutableStateFlow<LoanApplicationUiState>(LoanApplicationUiState.Loading)
-    val loanUiState: StateFlow<LoanApplicationUiState> = _loanUiState
+    var loanUiState: StateFlow<LoanApplicationUiState> = MutableStateFlow(LoanApplicationUiState.Loading)
 
     private val _loanApplicationScreenData = MutableStateFlow(LoanApplicationScreenData())
     val loanApplicationScreenData: StateFlow<LoanApplicationScreenData> = _loanApplicationScreenData
 
     var loanState: LoanState = LoanState.CREATE
     var loanWithAssociations: LoanWithAssociations? = LoanWithAssociations()
-    var loanTemplate: LoanTemplate? = null
+    var loanTemplate: LoanTemplate = LoanTemplate()
     var productId: Int = 0
     var purposeId: Int = 0
     private var isLoanUpdatePurposesInitialization: Boolean = true
@@ -44,31 +50,60 @@ class LoanApplicationViewModel @Inject constructor(
         )
     }
 
-    fun loadLoanTemplate() { loadLoanApplicationTemplate(loanState) }
+    fun loadLoanTemplate() {
+        loadLoanApplicationTemplate(loanState)
+    }
 
     private fun loadLoanApplicationTemplate(loanState: LoanState) {
-        viewModelScope.launch {
-            _loanUiState.value = LoanApplicationUiState.Loading
-            loanRepositoryImp.template()?.catch {
-                _loanUiState.value = LoanApplicationUiState.Error(R.string.error_fetching_template)
-            }?.collect {
-                it?.let { loanTemplate ->
-                    this@LoanApplicationViewModel.loanTemplate = loanTemplate
-                    if (loanState == LoanState.CREATE) showLoanTemplate(loanTemplate = loanTemplate)
-                    else showUpdateLoanTemplate(loanTemplate = loanTemplate)
+        loanUiState = loanRepositoryImp.template()
+            .asResult()
+            .map { result ->
+                when (result) {
+                    is Result.Success -> {
+                        loanTemplate = result.data ?: LoanTemplate()
+                        if (loanState == LoanState.CREATE) showLoanTemplate(loanTemplate = loanTemplate)
+                        else showUpdateLoanTemplate(loanTemplate = loanTemplate )
+                        LoanApplicationUiState.Success
+                    }
+                    is Result.Loading -> LoanApplicationUiState.Loading
+                    is Result.Error -> LoanApplicationUiState.Error(R.string.error_fetching_template)
                 }
             }
-        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = LoanApplicationUiState.Loading
+            )
+    }
+
+    private fun loadLoanApplicationTemplateByProduct(productId: Int?, loanState: LoanState) {
+        loanUiState = loanRepositoryImp.getLoanTemplateByProduct(productId)
+            .asResult()
+            .map { result ->
+                when (result) {
+                    is Result.Success -> {
+                        this@LoanApplicationViewModel.loanTemplate = loanTemplate
+                        if (loanState == LoanState.CREATE) showLoanTemplateByProduct(loanTemplate = loanTemplate)
+                        else showUpdateLoanTemplateByProduct(loanTemplate = loanTemplate)
+                        LoanApplicationUiState.Success
+                    }
+                    is Result.Loading -> LoanApplicationUiState.Loading
+                    is Result.Error -> LoanApplicationUiState.Error(R.string.error_fetching_template)
+                }
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = LoanApplicationUiState.Loading
+            )
     }
 
     private fun showLoanTemplate(loanTemplate: LoanTemplate) {
-        _loanUiState.value = LoanApplicationUiState.Success
         val listLoanProducts = refreshLoanProductList(loanTemplate = loanTemplate)
         _loanApplicationScreenData.value = loanApplicationScreenData.value.copy(listLoanProducts = listLoanProducts)
     }
 
     private fun showUpdateLoanTemplate(loanTemplate: LoanTemplate) {
-        _loanUiState.value = LoanApplicationUiState.Success
         val listLoanProducts = refreshLoanProductList(loanTemplate = loanTemplate)
         _loanApplicationScreenData.value = loanApplicationScreenData.value.copy(
             listLoanProducts = listLoanProducts,
@@ -82,23 +117,7 @@ class LoanApplicationViewModel @Inject constructor(
         )
     }
 
-    fun loadLoanApplicationTemplateByProduct(productId: Int?, loanState: LoanState) {
-        viewModelScope.launch {
-            _loanUiState.value = LoanApplicationUiState.Loading
-            loanRepositoryImp.getLoanTemplateByProduct(productId)?.catch {
-                _loanUiState.value = LoanApplicationUiState.Error(R.string.error_fetching_template)
-            }?.collect {
-                it?.let { loanTemplate ->
-                    this@LoanApplicationViewModel.loanTemplate = loanTemplate
-                    if (loanState == LoanState.CREATE) showLoanTemplateByProduct(loanTemplate = loanTemplate)
-                    else showUpdateLoanTemplateByProduct(loanTemplate = loanTemplate)
-                }
-            }
-        }
-    }
-
     private fun showLoanTemplateByProduct(loanTemplate: LoanTemplate) {
-        _loanUiState.value = LoanApplicationUiState.Success
         val loanPurposeList = refreshLoanPurposeList(loanTemplate = loanTemplate)
         _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(
             listLoanPurpose = loanPurposeList,
@@ -111,7 +130,6 @@ class LoanApplicationViewModel @Inject constructor(
     }
 
     private fun showUpdateLoanTemplateByProduct(loanTemplate: LoanTemplate) {
-        _loanUiState.value = LoanApplicationUiState.Success
         val loanPurposeList = refreshLoanPurposeList(loanTemplate = loanTemplate)
         if (isLoanUpdatePurposesInitialization && loanWithAssociations?.loanPurposeName != null) {
             _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(
@@ -157,9 +175,9 @@ class LoanApplicationViewModel @Inject constructor(
     }
 
     fun purposeSelected(position: Int) {
-        loanTemplate?.loanPurposeOptions?.let {
+        loanTemplate.loanPurposeOptions.let {
             if (it.size > position) {
-                purposeId = loanTemplate?.loanPurposeOptions?.get(position)?.id ?: 0
+                purposeId = loanTemplate.loanPurposeOptions.get(position).id ?: 0
             }
         }
         _loanApplicationScreenData.value = loanApplicationScreenData.value

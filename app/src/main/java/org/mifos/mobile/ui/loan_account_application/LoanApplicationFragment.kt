@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import org.mifos.mobile.R
+import org.mifos.mobile.core.ui.component.mifosComposeView
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.models.accounts.loan.LoanAccount
 import org.mifos.mobile.models.accounts.loan.LoanWithAssociations
@@ -31,8 +32,8 @@ class LoanApplicationFragment : BaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        (activity as? BaseActivity)?.hideToolbar()
 
+        (activity as? BaseActivity)?.hideToolbar()
         if (arguments != null) {
             viewModel.loanState = arguments?.getCheckedSerializable(LoanState::class.java, Constants.LOAN_STATE) as? LoanState ?: LoanState.CREATE
             if (viewModel.loanState == LoanState.UPDATE) {
@@ -47,63 +48,42 @@ class LoanApplicationFragment : BaseFragment() {
         savedInstanceState: Bundle?,
     ): View {
         viewModel.loadLoanTemplate()
-        return ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                MifosMobileTheme {
-                    LoanApplicationScreen(
-                        viewModel = viewModel,
-                        navigateBack = { activity?.finish() },
-                        review = { onReviewLoanApplication() }
-                    )
-                }
-            }
+        return mifosComposeView(requireContext()) {
+            LoanApplicationScreen(
+                navigateBack = { activity?.finish() },
+                reviewNewLoanApplication = { reviewNewLoanApplication() },
+                submitUpdateLoanApplication = { submitUpdateLoanApplication() }
+            )
         }
     }
 
-    private fun onReviewLoanApplication() {
-        if (viewModel.loanState == LoanState.CREATE) reviewNewLoanApplication()
-        else submitUpdateLoanApplication()
-    }
 
     private fun reviewNewLoanApplication() {
         val loansPayload = LoansPayload()
-        loansPayload.clientId = viewModel.loanTemplate?.clientId
+        loansPayload.clientId = viewModel.loanTemplate.clientId
         loansPayload.loanPurpose = viewModel.loanApplicationScreenData.value.selectedLoanPurpose ?: getString(R.string.loan_purpose_not_provided)
         loansPayload.productName = viewModel.loanApplicationScreenData.value.selectedLoanProduct
         loansPayload.currency = viewModel.loanApplicationScreenData.value.currencyLabel
         if (viewModel.purposeId > 0) loansPayload.loanPurposeId = viewModel.purposeId
         loansPayload.productId = viewModel.productId
-        loansPayload.principal = viewModel.loanApplicationScreenData.value.principalAmount?.toDouble() ?: 0.0
-        loansPayload.loanTermFrequency = viewModel.loanTemplate?.termFrequency
-        loansPayload.loanTermFrequencyType = viewModel.loanTemplate?.interestRateFrequencyType?.id
+        loansPayload.principal = viewModel.loanApplicationScreenData.value.principalAmount?.toDoubleOrNull() ?: 0.0
+        loansPayload.loanTermFrequency = viewModel.loanTemplate.termFrequency
+        loansPayload.loanTermFrequencyType = viewModel.loanTemplate.interestRateFrequencyType?.id
         loansPayload.loanType = "individual"
-        loansPayload.numberOfRepayments = viewModel.loanTemplate?.numberOfRepayments
-        loansPayload.repaymentEvery = viewModel.loanTemplate?.repaymentEvery
-        loansPayload.repaymentFrequencyType = viewModel.loanTemplate?.interestRateFrequencyType?.id
-        loansPayload.interestRatePerPeriod = viewModel.loanTemplate?.interestRatePerPeriod
-        loansPayload.expectedDisbursementDate = DateHelper
-            .getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, viewModel.loanApplicationScreenData.value.disbursementDate)
-        loansPayload.submittedOnDate = DateHelper
-            .getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, viewModel.loanApplicationScreenData.value.submittedDate)
-        loansPayload.transactionProcessingStrategyId = viewModel.loanTemplate?.transactionProcessingStrategyId
-        loansPayload.amortizationType = viewModel.loanTemplate?.amortizationType?.id
-        loansPayload.interestCalculationPeriodType = viewModel.loanTemplate?.interestCalculationPeriodType?.id
-        loansPayload.interestType = viewModel.loanTemplate?.interestType?.id
+        loansPayload.numberOfRepayments = viewModel.loanTemplate.numberOfRepayments
+        loansPayload.repaymentEvery = viewModel.loanTemplate.repaymentEvery
+        loansPayload.repaymentFrequencyType = viewModel.loanTemplate.interestRateFrequencyType?.id
+        loansPayload.interestRatePerPeriod = viewModel.loanTemplate.interestRatePerPeriod
+        loansPayload.expectedDisbursementDate = DateHelper.getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, viewModel.loanApplicationScreenData.value.disbursementDate)
+        loansPayload.submittedOnDate = DateHelper.getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, viewModel.loanApplicationScreenData.value.submittedDate)
+        loansPayload.transactionProcessingStrategyId = viewModel.loanTemplate.transactionProcessingStrategyId
+        loansPayload.amortizationType = viewModel.loanTemplate.amortizationType?.id
+        loansPayload.interestCalculationPeriodType = viewModel.loanTemplate.interestCalculationPeriodType?.id
+        loansPayload.interestType = viewModel.loanTemplate.interestType?.id
         (activity as BaseActivity?)?.replaceFragment(
-            newInstance(
-                viewModel.loanState,
-                loansPayload,
-                getString(
-                    R.string.string_and_string,
-                    getString(R.string.new_loan_application) + " ",
-                    viewModel.loanApplicationScreenData.value.clientName ?: "",
-                ),
-                getString(
-                    R.string.string_and_string,
-                    getString(R.string.account_number) + " ",
-                    viewModel.loanApplicationScreenData.value.accountNumber ?: "",
-                ),
+            newInstance(viewModel.loanState, loansPayload,
+                getString(R.string.string_and_string, getString(R.string.new_loan_application) + " ", viewModel.loanApplicationScreenData.value.clientName ?: "",),
+                getString(R.string.string_and_string, getString(R.string.account_number) + " ", viewModel.loanApplicationScreenData.value.accountNumber ?: "",),
             ),
             true,
             R.id.container,
@@ -112,42 +92,27 @@ class LoanApplicationFragment : BaseFragment() {
 
     private fun submitUpdateLoanApplication() {
         val loansPayload = LoansPayload()
-        loansPayload.principal =
-            viewModel.loanApplicationScreenData.value.principalAmount?.toDouble() ?: 0.0
+        loansPayload.principal = viewModel.loanApplicationScreenData.value.principalAmount?.toDoubleOrNull() ?: 0.0
         loansPayload.productId = viewModel.productId
         loansPayload.loanPurpose = viewModel.loanApplicationScreenData.value.selectedLoanPurpose ?: getString(R.string.loan_purpose_not_provided)
         loansPayload.productName = viewModel.loanApplicationScreenData.value.selectedLoanProduct
         loansPayload.currency = viewModel.loanApplicationScreenData.value.currencyLabel
         if (viewModel.purposeId > 0) loansPayload.loanPurposeId = viewModel.purposeId
-        loansPayload.loanTermFrequency = viewModel.loanTemplate?.termFrequency
-        loansPayload.loanTermFrequencyType = viewModel.loanTemplate?.interestRateFrequencyType?.id
-        loansPayload.numberOfRepayments = viewModel.loanTemplate?.numberOfRepayments
-        loansPayload.repaymentEvery = viewModel.loanTemplate?.repaymentEvery
-        loansPayload.repaymentFrequencyType = viewModel.loanTemplate?.interestRateFrequencyType?.id
-        loansPayload.interestRatePerPeriod = viewModel.loanTemplate?.interestRatePerPeriod
-        loansPayload.interestType = viewModel.loanTemplate?.interestType?.id
-        loansPayload.interestCalculationPeriodType =
-            viewModel.loanTemplate?.interestCalculationPeriodType?.id
-        loansPayload.amortizationType = viewModel.loanTemplate?.amortizationType?.id
-        loansPayload.transactionProcessingStrategyId =
-            viewModel.loanTemplate?.transactionProcessingStrategyId
-        loansPayload.expectedDisbursementDate = DateHelper
-            .getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, viewModel.loanApplicationScreenData.value.disbursementDate)
+        loansPayload.loanTermFrequency = viewModel.loanTemplate.termFrequency
+        loansPayload.loanTermFrequencyType = viewModel.loanTemplate.interestRateFrequencyType?.id
+        loansPayload.numberOfRepayments = viewModel.loanTemplate.numberOfRepayments
+        loansPayload.repaymentEvery = viewModel.loanTemplate.repaymentEvery
+        loansPayload.repaymentFrequencyType = viewModel.loanTemplate.interestRateFrequencyType?.id
+        loansPayload.interestRatePerPeriod = viewModel.loanTemplate.interestRatePerPeriod
+        loansPayload.interestType = viewModel.loanTemplate.interestType?.id
+        loansPayload.interestCalculationPeriodType = viewModel.loanTemplate.interestCalculationPeriodType?.id
+        loansPayload.amortizationType = viewModel.loanTemplate.amortizationType?.id
+        loansPayload.transactionProcessingStrategyId = viewModel.loanTemplate.transactionProcessingStrategyId
+        loansPayload.expectedDisbursementDate = DateHelper.getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, viewModel.loanApplicationScreenData.value.disbursementDate)
         (activity as BaseActivity?)?.replaceFragment(
-            newInstance(
-                viewModel.loanState,
-                loansPayload,
-                viewModel.loanWithAssociations?.id?.toLong(),
-                getString(
-                    R.string.string_and_string,
-                    getString(R.string.new_loan_application) + " ",
-                    viewModel.loanApplicationScreenData.value.clientName ?: "",
-                ),
-                getString(
-                    R.string.string_and_string,
-                    getString(R.string.account_number) + " ",
-                    viewModel.loanApplicationScreenData.value.accountNumber ?: "",
-                ),
+            newInstance(viewModel.loanState, loansPayload, viewModel.loanWithAssociations?.id?.toLong(),
+                getString(R.string.string_and_string, getString(R.string.new_loan_application) + " ", viewModel.loanApplicationScreenData.value.clientName ?: "",),
+                getString(R.string.string_and_string, getString(R.string.account_number) + " ", viewModel.loanApplicationScreenData.value.accountNumber ?: "",),
             ),
             true,
             R.id.container,

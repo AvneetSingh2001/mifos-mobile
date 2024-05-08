@@ -19,7 +19,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mifos.mobile.R
+import org.mifos.mobile.core.ui.component.MifosErrorComponent
 import org.mifos.mobile.core.ui.component.MifosProgressIndicator
+import org.mifos.mobile.core.ui.component.MifosProgressIndicatorOverlay
 import org.mifos.mobile.core.ui.component.MifosTopBar
 import org.mifos.mobile.core.ui.component.NoInternet
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
@@ -31,7 +33,8 @@ import org.mifos.mobile.utils.Network
 fun LoanApplicationScreen(
     viewModel: LoanApplicationViewModel = hiltViewModel(),
     navigateBack: (isSuccess: Boolean) -> Unit,
-    review: () -> Unit,
+    reviewNewLoanApplication: () -> Unit,
+    submitUpdateLoanApplication: () -> Unit
 ) {
     val uiState by viewModel.loanUiState.collectAsStateWithLifecycle()
     val uiData by viewModel.loanApplicationScreenData.collectAsStateWithLifecycle()
@@ -39,14 +42,17 @@ fun LoanApplicationScreen(
     LoanApplicationScreen(
         uiState = uiState,
         uiData = uiData,
+        navigateBack = navigateBack,
         loanState = viewModel.loanState,
         onRetry = { viewModel.loadLoanTemplate() },
-        navigateBack = navigateBack,
         selectProduct = { viewModel.productSelected(it) },
         selectPurpose = { viewModel.purposeSelected(it) },
         setDisbursementDate = { viewModel.setDisburseDate(it) },
         setPrincipalAmount = { viewModel.setPrincipalAmount(it) },
-        reviewClicked = review
+        reviewClicked = {
+            if (viewModel.loanState == LoanState.CREATE) reviewNewLoanApplication()
+            else submitUpdateLoanApplication()
+        }
     )
 }
 
@@ -63,6 +69,8 @@ fun LoanApplicationScreen(
     reviewClicked: () -> Unit,
     onRetry: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Column(modifier = Modifier.fillMaxSize()) {
         MifosTopBar(
             modifier = Modifier.fillMaxWidth(),
@@ -84,41 +92,24 @@ fun LoanApplicationScreen(
                 setPrincipalAmount = setPrincipalAmount,
                 setDisbursementDate = setDisbursementDate
             )
+
             when (uiState) {
-                is LoanApplicationUiState.Loading -> {
-                    MifosProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background.copy(0.8f))
-                    )
-                }
+                is LoanApplicationUiState.Success -> Unit
+
+                is LoanApplicationUiState.Loading -> { MifosProgressIndicatorOverlay() }
 
                 is LoanApplicationUiState.Error -> {
-                    ErrorComponent(onRetry = onRetry)
+                    MifosErrorComponent(
+                        isNetworkConnected = Network.isConnected(context),
+                        isEmptyData = false,
+                        isRetryEnabled = true,
+                        onRetry = onRetry
+                    )
                 }
-
-                is LoanApplicationUiState.Success -> Unit
             }
         }
     }
 }
-
-
-@Composable
-fun ErrorComponent(onRetry: () -> Unit) {
-    val context = LocalContext.current
-    if (!Network.isConnected(context)) {
-        NoInternet(
-            icon = R.drawable.ic_portable_wifi_off_black_24dp,
-            error = R.string.no_internet_connection,
-            isRetryEnabled = true,
-            retry = onRetry
-        )
-    } else {
-        Toast.makeText(context, stringResource(id = R.string.error_fetching_template), Toast.LENGTH_SHORT).show()
-    }
-}
-
 
 class UiStatesParameterProvider : PreviewParameterProvider<LoanApplicationUiState> {
     override val values: Sequence<LoanApplicationUiState>

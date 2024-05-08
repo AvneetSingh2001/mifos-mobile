@@ -31,16 +31,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.text.isDigitsOnly
 import org.mifos.mobile.R
 import org.mifos.mobile.core.ui.component.MifosDropDownTextField
+import org.mifos.mobile.core.ui.component.MifosOutlinedTextField
 import org.mifos.mobile.core.ui.component.MifosTextTitleDescDrawableSingleLine
 import org.mifos.mobile.core.ui.component.MifosTextTitleDescSingleLine
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
+import org.mifos.mobile.utils.DateHelper
+import org.mifos.mobile.utils.DateHelper.FORMAT_dd_MM_yyyy
 import org.mifos.mobile.utils.PresentOrFutureSelectableDates
 import java.text.SimpleDateFormat
 import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,13 +69,16 @@ fun LoanApplicationContent(
     var selectedLoanProduct by rememberSaveable { mutableStateOf(uiData.selectedLoanProduct) }
     var selectedLoanPurpose by rememberSaveable { mutableStateOf(uiData.selectedLoanPurpose) }
     val datePickerState = rememberDatePickerState(selectableDates = PresentOrFutureSelectableDates)
+    var principalAmount by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(uiData.principalAmount ?: ""))
+    }
 
     LaunchedEffect(key1 = selectedLoanProduct) {
         principalAmountError = null
         selectedLoanProductError = null
     }
 
-    LaunchedEffect(key1 = uiData.principalAmount) {
+    LaunchedEffect(key1 = principalAmount) {
         principalAmountError = null
     }
 
@@ -133,17 +142,18 @@ fun LoanApplicationContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = uiData.principalAmount ?: "",
-            onValueChange = { setPrincipalAmount(it) },
-            label = { Text(text = stringResource(id = R.string.principal_amount)) },
-            isError = principalAmountError != null,
+        MifosOutlinedTextField(
+            value = principalAmount,
+            onValueChange = {
+                principalAmount = it
+                setPrincipalAmount(principalAmount.text)
+            },
+            label = R.string.principal_amount,
+            error = principalAmountError != null,
             modifier = Modifier.fillMaxWidth(),
-            supportingText = { if(principalAmountError != null) Text(text = principalAmountError!!) },
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done,
-                keyboardType = KeyboardType.Number
-            ),
+            supportingText =  if(principalAmountError != null) principalAmountError ?: "" else "",
+            imeAction = ImeAction.Done,
+            keyboardType = KeyboardType.Number,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -175,16 +185,12 @@ fun LoanApplicationContent(
             onClick = {
                 selectedLoanProductError = null
                 principalAmountError = null
-                if(uiData.selectedLoanProduct.isNullOrBlank()) {
-                    selectedLoanProductError = context.getString(R.string.select_loan_product_field)
-                } else if(uiData.principalAmount.isNullOrBlank()) {
-                    principalAmountError = context.getString(R.string.enter_amount)
-                } else if(uiData.principalAmount == ".") {
-                    principalAmountError = context.getString(R.string.invalid_amount)
-                } else if(uiData.principalAmount.orEmpty().matches("^0*".toRegex())) {
-                    principalAmountError = context.getString(R.string.amount_greater_than_zero)
-                } else {
-                    reviewClicked()
+                when {
+                    uiData.selectedLoanProduct.isNullOrBlank() -> { selectedLoanProductError = context.getString(R.string.select_loan_product_field) }
+                    principalAmount.text.isNullOrBlank() || !principalAmount.text.isDigitsOnly() -> { principalAmountError = context.getString(R.string.enter_amount) }
+                    principalAmount.text == "." -> { principalAmountError = context.getString(R.string.invalid_amount) }
+                    principalAmount.text.matches("^0*".toRegex()) -> { principalAmountError = context.getString(R.string.amount_greater_than_zero) }
+                    else -> { reviewClicked() }
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -200,18 +206,22 @@ fun LoanApplicationContent(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val timeInMillis = datePickerState.selectedDateMillis
-                        val formattedDate = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(timeInMillis)
-                        expectedDisbursementDate = formattedDate
-                        setDisbursementDate(formattedDate)
+                        val formattedDate = DateHelper.getSpecificFormat(
+                            format = FORMAT_dd_MM_yyyy,
+                            dateLong = datePickerState.selectedDateMillis
+                        )
+                        formattedDate?.let {
+                            expectedDisbursementDate = formattedDate
+                            setDisbursementDate(formattedDate)
+                        }
                         showDatePicker = false
                     }
-                ) { Text("OK") }
+                ) { Text(stringResource(id = R.string.dialog_action_ok)) }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showDatePicker = false }
-                ) { Text("Cancel") }
+                ) { Text(stringResource(id = R.string.dialog_action_cancel)) }
             },
             colors = DatePickerDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.surface,
