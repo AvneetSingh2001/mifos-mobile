@@ -5,6 +5,7 @@
 package org.mifos.mobile.api
 
 import android.text.TextUtils
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.mifos.mobile.api.local.PreferencesHelper
@@ -32,7 +33,7 @@ class SelfServiceInterceptor(private val preferencesHelper: PreferencesHelper) :
     companion object {
         const val HEADER_TENANT = "Fineract-Platform-TenantId"
         const val HEADER_AUTH = "Authorization"
-        const val DEFAULT_TENANT = "default"
+        const val DEFAULT_TENANT = "gsoc"
         const val CONTENT_TYPE = "Content-Type"
     }
 }
