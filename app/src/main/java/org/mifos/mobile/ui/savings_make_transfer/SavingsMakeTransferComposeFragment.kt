@@ -54,21 +54,22 @@ class SavingsMakeTransferComposeFragment : BaseFragment() {
     }
 
     private fun reviewTransfer(payload: ReviewTransferPayload) {
-        val transferPayload = TransferPayload()
-        val template = viewModel.savingsMakeTransferUiData.value.accountOptionsTemplate
-        transferPayload.fromAccountId = payload.payFromAccount?.accountId
-        transferPayload.fromClientId = payload.payFromAccount?.clientId
-        transferPayload.fromAccountType = payload.payFromAccount?.accountType?.id
-        transferPayload.fromOfficeId =  payload.payFromAccount?.officeId
-        transferPayload.toOfficeId =  payload.payFromAccount?.officeId
-        transferPayload.toAccountId = payload.payToAccount?.accountId
-        transferPayload.toClientId = payload.payToAccount?.clientId
-        transferPayload.toAccountType = payload.payToAccount?.accountType?.id
-        transferPayload.transferDate =  DateHelper.getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, getTodayFormatted(),)
-        transferPayload.transferAmount = payload.amount.toDoubleOrNull()
-        transferPayload.transferDescription = payload.review
-        transferPayload.fromAccountNumber = payload.payFromAccount?.accountNo
-        transferPayload.toAccountNumber = payload.payToAccount?.accountNo
+        val transferPayload = TransferPayload().apply {
+            fromAccountId = payload.payFromAccount?.accountId
+            fromClientId = payload.payFromAccount?.clientId
+            fromAccountType = payload.payFromAccount?.accountType?.id
+            fromOfficeId = payload.payFromAccount?.officeId
+            toOfficeId = payload.payFromAccount?.officeId
+            toAccountId = payload.payToAccount?.accountId
+            toClientId = payload.payToAccount?.clientId
+            toAccountType = payload.payToAccount?.accountType?.id
+            transferDate = DateHelper.getSpecificFormat(DateHelper.FORMAT_dd_MMMM_yyyy, getTodayFormatted())
+            transferAmount = payload.amount.toDoubleOrNull()
+            transferDescription = payload.review
+            fromAccountNumber = payload.payFromAccount?.accountNo
+            toAccountNumber = payload.payToAccount?.accountNo
+        }
+
         (activity as BaseActivity?)?.replaceFragment(
             TransferProcessFragment.newInstance(transferPayload, TransferType.SELF),
             true,

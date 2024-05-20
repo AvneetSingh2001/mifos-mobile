@@ -1,6 +1,7 @@
 package org.mifos.mobile.ui.savings_make_transfer
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -28,11 +30,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import org.mifos.mobile.R
 import org.mifos.mobile.core.ui.component.MFStepProcess
@@ -43,8 +49,11 @@ import org.mifos.mobile.core.ui.component.getStepState
 import org.mifos.mobile.core.ui.theme.DarkGray
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.core.ui.theme.Primary
+import org.mifos.mobile.models.accounts.loan.LoanWithAssociations
 import org.mifos.mobile.models.payload.AccountDetail
 import org.mifos.mobile.models.templates.account.AccountOption
+import org.mifos.mobile.ui.loan_account_withdraw.LoanAccountWithdrawScreen
+import org.mifos.mobile.ui.loan_account_withdraw.LoanAccountWithdrawUiState
 
 @Composable
 fun SavingsMakeTransferContent(
@@ -89,7 +98,7 @@ fun SavingsMakeTransferContent(
     Column(
         modifier = Modifier
             .verticalScroll(scrollState)
-            .padding(horizontal = 10.dp)
+            .padding(horizontal = 12.dp)
             .fillMaxSize()
     ) {
         for (step in stepsState) {
@@ -234,8 +243,20 @@ fun EnterAmountStep(
     processState: StepProcessState,
     onContinueClick: (String) -> Unit
 ) {
+    val context = LocalContext.current
     var amount by remember { mutableStateOf(TextFieldValue(outstandingBalance?.toString() ?: "")) }
     var amountError by rememberSaveable { mutableStateOf<Int?>(null) }
+    var showAmountError by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = amount) {
+        showAmountError = false
+        amountError = when {
+            amount.text.trim() == "" -> R.string.enter_amount
+            amount.text.contains(".") -> R.string.invalid_amount
+            amount.text.toDoubleOrNull() == 0.0 -> R.string.amount_greater_than_zero
+            else -> null
+        }
+    }
 
     Column(modifier = modifier) {
         Text(
@@ -248,24 +269,16 @@ fun EnterAmountStep(
                 modifier = Modifier,
                 value = amount,
                 keyboardType = KeyboardType.Number,
-                onValueChange = {
-                    amount = it
-                    amountError = when {
-                        it.text.trim() == "" -> R.string.enter_amount
-                        it.text.contains(".") -> R.string.invalid_amount
-                        it.text.toDoubleOrNull() == 0.0 -> R.string.amount_greater_than_zero
-                        else -> { null }
-                    }
-                },
+                onValueChange = { amount = it },
+                error = showAmountError,
+                supportingText = amountError?.let { stringResource(id = it) },
                 enabled = outstandingBalance == null,
-                error = amountError != null,
                 label = R.string.enter_amount,
-                supportingText = amountError?.let { stringResource(id = it) }
             )
             Button(
                 onClick = {
-                    if (amount.text.trim().isNotBlank()) onContinueClick(amount.text)
-                    else amountError = R.string.required
+                    if(amountError == null) { onContinueClick(amount.text) }
+                    else { showAmountError = true }
                 },
                 content = {
                     Text(text = stringResource(id = R.string.continue_str))
@@ -283,7 +296,16 @@ fun RemarkStep(
     onCancelledClicked: () -> Unit = {}
 ) {
     var remark by remember { mutableStateOf(TextFieldValue("")) }
-    var remarkError by rememberSaveable { mutableStateOf(false) }
+    var remarkError by rememberSaveable { mutableStateOf<Int?>(null) }
+    var showRemarkError by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(key1 = remark) {
+        showRemarkError = false
+        remarkError = when {
+            remark.text.trim().isBlank() -> R.string.enter_remarks
+            else -> null
+        }
+    }
 
     Column(modifier = modifier) {
         Text(
@@ -292,27 +314,25 @@ fun RemarkStep(
             fontWeight = FontWeight.Bold
         )
         if (processState == StepProcessState.ACTIVE) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             TextField(
                 colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent),
                 value = remark,
-                isError = remarkError,
-                onValueChange = {
-                    remarkError = false
-                    remark = it
-                },
+                isError = showRemarkError,
+                supportingText = { remarkError?.let { stringResource(id = it) } },
+                onValueChange = { remark = it },
                 label = { Text(text = stringResource(id = R.string.remark)) }
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Row {
                 Button(
                     onClick = {
-                        if (remark.text.trim().isNotBlank()) onContinueClicked(remark.text)
-                        else remarkError = true
+                        remarkError?.let { showRemarkError = true }
+                            ?: onContinueClicked(remark.text)
                     },
                     content = { Text(text = stringResource(id = R.string.review)) }
                 )
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 OutlinedButton(
                     onClick = { onCancelledClicked() },
                     content = { Text(text = stringResource(id = R.string.cancel)) }
@@ -339,3 +359,4 @@ fun SavingsMakeTransferContentPreview() {
         )
     }
 }
+

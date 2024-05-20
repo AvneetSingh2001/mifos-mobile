@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mifos.mobile.R
@@ -19,6 +21,7 @@ import org.mifos.mobile.core.ui.component.MFScaffold
 import org.mifos.mobile.core.ui.component.MifosErrorComponent
 import org.mifos.mobile.core.ui.component.MifosProgressIndicatorOverlay
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
+import org.mifos.mobile.ui.loan_account_withdraw.LoanAccountWithdrawUiState
 import org.mifos.mobile.utils.Constants
 import org.mifos.mobile.utils.Network
 
@@ -82,15 +85,27 @@ fun SavingsMakeTransferScreen(
 }
 
 
-@Preview
+
+class SavingsMakeTransferUiStatesPreviews : PreviewParameterProvider<SavingsMakeTransferUiState> {
+    override val values: Sequence<SavingsMakeTransferUiState>
+        get() = sequenceOf(
+            SavingsMakeTransferUiState.ShowUI,
+            SavingsMakeTransferUiState.Error(""),
+            SavingsMakeTransferUiState.Loading,
+        )
+}
+
+@Preview(showSystemUi = true)
 @Composable
-fun SavingsMakeTransferPreview() {
+fun SavingsMakeTransferContentPreview(
+    @PreviewParameter(SavingsMakeTransferUiStatesPreviews::class) savingsMakeTransferUIState: SavingsMakeTransferUiState
+) {
     MifosMobileTheme {
         SavingsMakeTransferScreen(
             navigateBack = {  },
             onCancelledClicked = {  },
             reviewTransfer = {  },
-            uiState = SavingsMakeTransferUiState.ShowUI,
+            uiState = savingsMakeTransferUIState,
             uiData = SavingsMakeTransferUiData()
         )
     }

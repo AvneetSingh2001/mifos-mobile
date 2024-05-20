@@ -74,7 +74,7 @@ fun MifosOutlinedTextField(
             TextStyle(fontSize = 18.sp)
         },
         keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Next,
+            imeAction = ImeAction.Done,
             keyboardType = keyboardType
             ),
         visualTransformation = visualTransformation,
