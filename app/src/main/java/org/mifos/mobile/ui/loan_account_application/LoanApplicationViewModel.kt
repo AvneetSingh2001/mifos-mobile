@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.mifos.mobile.R
 import org.mifos.mobile.models.accounts.loan.LoanWithAssociations
@@ -31,7 +32,8 @@ class LoanApplicationViewModel @Inject constructor(
     private val loanRepositoryImp: LoanRepository
 ) : ViewModel() {
 
-    var loanUiState: StateFlow<LoanApplicationUiState> = MutableStateFlow(LoanApplicationUiState.Loading)
+    var loanUiState: StateFlow<LoanApplicationUiState> =
+        MutableStateFlow(LoanApplicationUiState.Loading)
 
     private val _loanApplicationScreenData = MutableStateFlow(LoanApplicationScreenData())
     val loanApplicationScreenData: StateFlow<LoanApplicationScreenData> = _loanApplicationScreenData
@@ -44,10 +46,12 @@ class LoanApplicationViewModel @Inject constructor(
     private var isLoanUpdatePurposesInitialization: Boolean = true
 
     init {
-        _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(
-            submittedDate = getTodayFormatted(),
-            disbursementDate = getTodayFormatted()
-        )
+        _loanApplicationScreenData.update {
+            it.copy(
+                submittedDate = getTodayFormatted(),
+                disbursementDate = getTodayFormatted()
+            )
+        }
     }
 
     fun loadLoanTemplate() {
@@ -62,9 +66,10 @@ class LoanApplicationViewModel @Inject constructor(
                     is Result.Success -> {
                         loanTemplate = result.data ?: LoanTemplate()
                         if (loanState == LoanState.CREATE) showLoanTemplate(loanTemplate = loanTemplate)
-                        else showUpdateLoanTemplate(loanTemplate = loanTemplate )
+                        else showUpdateLoanTemplate(loanTemplate = loanTemplate)
                         LoanApplicationUiState.Success
                     }
+
                     is Result.Loading -> LoanApplicationUiState.Loading
                     is Result.Error -> LoanApplicationUiState.Error(R.string.error_fetching_template)
                 }
@@ -82,11 +87,11 @@ class LoanApplicationViewModel @Inject constructor(
             .map { result ->
                 when (result) {
                     is Result.Success -> {
-                        this@LoanApplicationViewModel.loanTemplate = loanTemplate
                         if (loanState == LoanState.CREATE) showLoanTemplateByProduct(loanTemplate = loanTemplate)
                         else showUpdateLoanTemplateByProduct(loanTemplate = loanTemplate)
                         LoanApplicationUiState.Success
                     }
+
                     is Result.Loading -> LoanApplicationUiState.Loading
                     is Result.Error -> LoanApplicationUiState.Error(R.string.error_fetching_template)
                 }
@@ -100,51 +105,75 @@ class LoanApplicationViewModel @Inject constructor(
 
     private fun showLoanTemplate(loanTemplate: LoanTemplate) {
         val listLoanProducts = refreshLoanProductList(loanTemplate = loanTemplate)
-        _loanApplicationScreenData.value = loanApplicationScreenData.value.copy(listLoanProducts = listLoanProducts)
+        _loanApplicationScreenData.update {
+            it.copy(listLoanProducts = listLoanProducts)
+        }
     }
 
     private fun showUpdateLoanTemplate(loanTemplate: LoanTemplate) {
         val listLoanProducts = refreshLoanProductList(loanTemplate = loanTemplate)
-        _loanApplicationScreenData.value = loanApplicationScreenData.value.copy(
-            listLoanProducts = listLoanProducts,
-            selectedLoanProduct = loanWithAssociations?.loanProductName,
-            accountNumber = loanWithAssociations?.accountNo,
-            clientName = loanWithAssociations?.clientName,
-            currencyLabel = loanWithAssociations?.currency?.displayLabel,
-            principalAmount = String.format(Locale.getDefault(), "%.2f", loanWithAssociations?.principal),
-            submittedDate = DateHelper.getDateAsString(loanWithAssociations?.timeline?.submittedOnDate, "dd-MM-yyyy"),
-            disbursementDate = DateHelper.getDateAsString(loanWithAssociations?.timeline?.expectedDisbursementDate, "dd-MM-yyyy")
-        )
+        _loanApplicationScreenData.update {
+            it.copy(
+                listLoanProducts = listLoanProducts,
+                selectedLoanProduct = loanWithAssociations?.loanProductName,
+                accountNumber = loanWithAssociations?.accountNo,
+                clientName = loanWithAssociations?.clientName,
+                currencyLabel = loanWithAssociations?.currency?.displayLabel,
+                principalAmount = String.format(
+                    Locale.getDefault(),
+                    "%.2f",
+                    loanWithAssociations?.principal
+                ),
+                submittedDate = DateHelper.getDateAsString(
+                    loanWithAssociations?.timeline?.submittedOnDate,
+                    "dd-MM-yyyy"
+                ),
+                disbursementDate = DateHelper.getDateAsString(
+                    loanWithAssociations?.timeline?.expectedDisbursementDate,
+                    "dd-MM-yyyy"
+                )
+            )
+        }
     }
 
     private fun showLoanTemplateByProduct(loanTemplate: LoanTemplate) {
         val loanPurposeList = refreshLoanPurposeList(loanTemplate = loanTemplate)
-        _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(
-            listLoanPurpose = loanPurposeList,
-            selectedLoanPurpose = loanPurposeList[0],
-            accountNumber = loanTemplate.clientAccountNo,
-            clientName = loanTemplate.clientName,
-            currencyLabel = loanTemplate.currency?.displayLabel,
-            principalAmount = String.format(Locale.getDefault(), "%.2f", loanTemplate.principal),
-        )
-    }
-
-    private fun showUpdateLoanTemplateByProduct(loanTemplate: LoanTemplate) {
-        val loanPurposeList = refreshLoanPurposeList(loanTemplate = loanTemplate)
-        if (isLoanUpdatePurposesInitialization && loanWithAssociations?.loanPurposeName != null) {
-            _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(
+        _loanApplicationScreenData.update {
+            it.copy(
                 listLoanPurpose = loanPurposeList,
                 selectedLoanPurpose = loanPurposeList[0],
-            )
-        } else {
-            _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(
-                listLoanPurpose = loanPurposeList,
-                selectedLoanPurpose = loanWithAssociations?.loanPurposeName,
                 accountNumber = loanTemplate.clientAccountNo,
                 clientName = loanTemplate.clientName,
                 currencyLabel = loanTemplate.currency?.displayLabel,
                 principalAmount = String.format(Locale.getDefault(), "%.2f", loanTemplate.principal),
             )
+        }
+    }
+
+    private fun showUpdateLoanTemplateByProduct(loanTemplate: LoanTemplate) {
+        val loanPurposeList = refreshLoanPurposeList(loanTemplate = loanTemplate)
+        if (isLoanUpdatePurposesInitialization && loanWithAssociations?.loanPurposeName != null) {
+            _loanApplicationScreenData.update {
+                it.copy(
+                    listLoanPurpose = loanPurposeList,
+                    selectedLoanPurpose = loanPurposeList[0],
+                )
+            }
+        } else {
+            _loanApplicationScreenData.update {
+                it.copy(
+                    listLoanPurpose = loanPurposeList,
+                    selectedLoanPurpose = loanWithAssociations?.loanPurposeName,
+                    accountNumber = loanTemplate.clientAccountNo,
+                    clientName = loanTemplate.clientName,
+                    currencyLabel = loanTemplate.currency?.displayLabel,
+                    principalAmount = String.format(
+                        Locale.getDefault(),
+                        "%.2f",
+                        loanTemplate.principal
+                    ),
+                )
+            }
         }
     }
 
@@ -170,8 +199,9 @@ class LoanApplicationViewModel @Inject constructor(
     fun productSelected(position: Int) {
         productId = loanTemplate?.productOptions?.get(position)?.id ?: 0
         loadLoanApplicationTemplateByProduct(productId, loanState)
-        _loanApplicationScreenData.value = loanApplicationScreenData.value
-            .copy(selectedLoanProduct = loanApplicationScreenData.value.listLoanProducts[position])
+        _loanApplicationScreenData.update {
+            it.copy(selectedLoanProduct = loanApplicationScreenData.value.listLoanProducts[position])
+        }
     }
 
     fun purposeSelected(position: Int) {
@@ -180,16 +210,15 @@ class LoanApplicationViewModel @Inject constructor(
                 purposeId = loanTemplate.loanPurposeOptions.get(position).id ?: 0
             }
         }
-        _loanApplicationScreenData.value = loanApplicationScreenData.value
-            .copy(selectedLoanPurpose = loanApplicationScreenData.value.listLoanPurpose[position])
+        _loanApplicationScreenData.update { it.copy(selectedLoanPurpose = loanApplicationScreenData.value.listLoanPurpose[position]) }
     }
 
     fun setDisburseDate(date: String) {
-        _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(disbursementDate = date)
+        _loanApplicationScreenData.update { it.copy(disbursementDate = date) }
     }
 
     fun setPrincipalAmount(amount: String) {
-        _loanApplicationScreenData.value = _loanApplicationScreenData.value.copy(principalAmount = amount)
+        _loanApplicationScreenData.update { it.copy(principalAmount = amount) }
     }
 }
 

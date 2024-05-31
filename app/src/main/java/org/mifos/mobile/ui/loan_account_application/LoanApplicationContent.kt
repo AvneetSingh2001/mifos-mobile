@@ -62,8 +62,8 @@ fun LoanApplicationContent(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var purposeTextFieldEnable by rememberSaveable { mutableStateOf(false) }
-    var principalAmountError by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedLoanProductError by rememberSaveable { mutableStateOf<String?>(null) }
+    var showSelectedLoanProductError by rememberSaveable { mutableStateOf(false) }
     var expectedDisbursementDate by rememberSaveable { mutableStateOf(uiData.disbursementDate) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var selectedLoanProduct by rememberSaveable { mutableStateOf(uiData.selectedLoanProduct) }
@@ -72,14 +72,27 @@ fun LoanApplicationContent(
     var principalAmount by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(uiData.principalAmount ?: ""))
     }
+    var principalAmountError by rememberSaveable { mutableStateOf<String?>(null) }
+    var showPrincipalAmountError by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(key1 = selectedLoanProduct) {
         principalAmountError = null
-        selectedLoanProductError = null
+        showSelectedLoanProductError = false
+        showPrincipalAmountError = false
+        selectedLoanProductError = when {
+            uiData.selectedLoanProduct.isNullOrBlank() -> context.getString(R.string.select_loan_product_field)
+            else -> null
+        }
     }
 
     LaunchedEffect(key1 = principalAmount) {
-        principalAmountError = null
+        showPrincipalAmountError = false
+        principalAmountError = when {
+            principalAmount.text.isNullOrBlank() || !principalAmount.text.isDigitsOnly() -> context.getString(R.string.enter_amount)
+            principalAmount.text == "." -> context.getString(R.string.invalid_amount)
+            principalAmount.text.matches("^0*".toRegex()) -> context.getString(R.string.amount_greater_than_zero)
+            else -> null
+        }
     }
 
     Column(
@@ -119,7 +132,7 @@ fun LoanApplicationContent(
         MifosDropDownTextField(optionsList = uiData.listLoanProducts.filterNotNull(),
             selectedOption = uiData.selectedLoanProduct,
             supportingText = selectedLoanProductError ?: "",
-            error = selectedLoanProductError != null,
+            error = showSelectedLoanProductError,
             labelResId = R.string.select_loan_product,
             onClick = { position, item ->
                 selectProduct(position)
@@ -149,9 +162,9 @@ fun LoanApplicationContent(
                 setPrincipalAmount(principalAmount.text)
             },
             label = R.string.principal_amount,
-            error = principalAmountError != null,
+            error = showPrincipalAmountError,
             modifier = Modifier.fillMaxWidth(),
-            supportingText =  if(principalAmountError != null) principalAmountError ?: "" else "",
+            supportingText =  principalAmountError ?: "",
             imeAction = ImeAction.Done,
             keyboardType = KeyboardType.Number,
         )
@@ -159,7 +172,8 @@ fun LoanApplicationContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         MifosTextTitleDescSingleLine(
-            title = stringResource(id = R.string.currency), description = uiData.currencyLabel ?: ""
+            title = stringResource(id = R.string.currency),
+            description = uiData.currencyLabel ?: ""
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -183,14 +197,10 @@ fun LoanApplicationContent(
 
         Button(
             onClick = {
-                selectedLoanProductError = null
-                principalAmountError = null
                 when {
-                    uiData.selectedLoanProduct.isNullOrBlank() -> { selectedLoanProductError = context.getString(R.string.select_loan_product_field) }
-                    principalAmount.text.isNullOrBlank() || !principalAmount.text.isDigitsOnly() -> { principalAmountError = context.getString(R.string.enter_amount) }
-                    principalAmount.text == "." -> { principalAmountError = context.getString(R.string.invalid_amount) }
-                    principalAmount.text.matches("^0*".toRegex()) -> { principalAmountError = context.getString(R.string.amount_greater_than_zero) }
-                    else -> { reviewClicked() }
+                    selectedLoanProductError != null -> showSelectedLoanProductError = true
+                    principalAmountError != null -> showPrincipalAmountError = true
+                    else -> reviewClicked()
                 }
             },
             modifier = Modifier.fillMaxWidth()

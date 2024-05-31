@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,44 +73,49 @@ fun LoanApplicationScreen(
 ) {
     val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        MifosTopBar(
-            modifier = Modifier.fillMaxWidth(),
-            navigateBack = { navigateBack(false) },
-            title = {
-                Text(text = stringResource(
-                    id = if (loanState == LoanState.CREATE) R.string.apply_for_loan
-                    else R.string.update_loan
-                ))
-            }
-        )
-
-        Box(modifier = Modifier.weight(1f)) {
-            LoanApplicationContent(
-                uiData = uiData,
-                selectProduct = selectProduct,
-                selectPurpose = selectPurpose,
-                reviewClicked = reviewClicked,
-                setPrincipalAmount = setPrincipalAmount,
-                setDisbursementDate = setDisbursementDate
+    Scaffold(
+        topBar = {
+            MifosTopBar(
+                modifier = Modifier.fillMaxWidth(),
+                navigateBack = { navigateBack(false) },
+                title = {
+                    Text(text = stringResource(
+                        id = if (loanState == LoanState.CREATE) R.string.apply_for_loan
+                        else R.string.update_loan
+                    ))
+                }
             )
-
-            when (uiState) {
-                is LoanApplicationUiState.Success -> Unit
-
-                is LoanApplicationUiState.Loading -> { MifosProgressIndicatorOverlay() }
-
-                is LoanApplicationUiState.Error -> {
-                    MifosErrorComponent(
-                        isNetworkConnected = Network.isConnected(context),
-                        isEmptyData = false,
-                        isRetryEnabled = true,
-                        onRetry = onRetry
+        },
+        content = {
+            Column(modifier = Modifier.padding(it).fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f)) {
+                    LoanApplicationContent(
+                        uiData = uiData,
+                        selectProduct = selectProduct,
+                        selectPurpose = selectPurpose,
+                        reviewClicked = reviewClicked,
+                        setPrincipalAmount = setPrincipalAmount,
+                        setDisbursementDate = setDisbursementDate
                     )
+                    when (uiState) {
+                        is LoanApplicationUiState.Success -> Unit
+
+                        is LoanApplicationUiState.Loading -> { MifosProgressIndicatorOverlay() }
+
+                        is LoanApplicationUiState.Error -> {
+                            MifosErrorComponent(
+                                isNetworkConnected = Network.isConnected(context),
+                                isEmptyData = false,
+                                isRetryEnabled = true,
+                                onRetry = onRetry
+                            )
+                        }
+                    }
                 }
             }
+
         }
-    }
+    )
 }
 
 class UiStatesParameterProvider : PreviewParameterProvider<LoanApplicationUiState> {
