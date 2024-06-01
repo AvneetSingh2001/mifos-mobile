@@ -87,11 +87,12 @@ class LoanApplicationViewModel @Inject constructor(
             .map { result ->
                 when (result) {
                     is Result.Success -> {
-                        if (loanState == LoanState.CREATE) showLoanTemplateByProduct(loanTemplate = loanTemplate)
-                        else showUpdateLoanTemplateByProduct(loanTemplate = loanTemplate)
+                        result.data?.let {
+                            if (loanState == LoanState.CREATE) showLoanTemplateByProduct(loanTemplate = it)
+                            else showUpdateLoanTemplateByProduct(loanTemplate = it)
+                        }
                         LoanApplicationUiState.Success
                     }
-
                     is Result.Loading -> LoanApplicationUiState.Loading
                     is Result.Error -> LoanApplicationUiState.Error(R.string.error_fetching_template)
                 }

@@ -56,8 +56,7 @@ fun LoanApplicationContent(
     selectProduct: (Int) -> Unit,
     selectPurpose: (Int) -> Unit,
     setDisbursementDate: (String) -> Unit,
-    setPrincipalAmount: (String) -> Unit,
-    reviewClicked: () -> Unit,
+    reviewClicked: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -75,6 +74,11 @@ fun LoanApplicationContent(
     var principalAmountError by rememberSaveable { mutableStateOf<String?>(null) }
     var showPrincipalAmountError by rememberSaveable { mutableStateOf(false) }
 
+
+    LaunchedEffect(key1 = uiData) {
+        principalAmount = TextFieldValue(uiData.principalAmount ?: "")
+    }
+
     LaunchedEffect(key1 = selectedLoanProduct) {
         principalAmountError = null
         showSelectedLoanProductError = false
@@ -88,8 +92,7 @@ fun LoanApplicationContent(
     LaunchedEffect(key1 = principalAmount) {
         showPrincipalAmountError = false
         principalAmountError = when {
-            principalAmount.text.isNullOrBlank() || !principalAmount.text.isDigitsOnly() -> context.getString(R.string.enter_amount)
-            principalAmount.text == "." -> context.getString(R.string.invalid_amount)
+            principalAmount.text.isNullOrBlank() -> context.getString(R.string.enter_amount)
             principalAmount.text.matches("^0*".toRegex()) -> context.getString(R.string.amount_greater_than_zero)
             else -> null
         }
@@ -157,10 +160,7 @@ fun LoanApplicationContent(
 
         MifosOutlinedTextField(
             value = principalAmount,
-            onValueChange = {
-                principalAmount = it
-                setPrincipalAmount(principalAmount.text)
-            },
+            onValueChange = { principalAmount = it },
             label = R.string.principal_amount,
             error = showPrincipalAmountError,
             modifier = Modifier.fillMaxWidth(),
@@ -200,7 +200,7 @@ fun LoanApplicationContent(
                 when {
                     selectedLoanProductError != null -> showSelectedLoanProductError = true
                     principalAmountError != null -> showPrincipalAmountError = true
-                    else -> reviewClicked()
+                    else -> reviewClicked(principalAmount.text)
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -259,7 +259,6 @@ fun LoanAccountApplicationContentPreview() {
             selectPurpose = { },
             reviewClicked = { },
             setDisbursementDate = { },
-            setPrincipalAmount = { }
         )
     }
 }

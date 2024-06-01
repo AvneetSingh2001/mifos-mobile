@@ -50,8 +50,8 @@ fun LoanApplicationScreen(
         selectProduct = { viewModel.productSelected(it) },
         selectPurpose = { viewModel.purposeSelected(it) },
         setDisbursementDate = { viewModel.setDisburseDate(it) },
-        setPrincipalAmount = { viewModel.setPrincipalAmount(it) },
         reviewClicked = {
+            viewModel.setPrincipalAmount(it)
             if (viewModel.loanState == LoanState.CREATE) reviewNewLoanApplication()
             else submitUpdateLoanApplication()
         }
@@ -67,8 +67,7 @@ fun LoanApplicationScreen(
     selectProduct: (Int) -> Unit,
     selectPurpose: (Int) -> Unit,
     setDisbursementDate: (String) -> Unit,
-    setPrincipalAmount: (String) -> Unit,
-    reviewClicked: () -> Unit,
+    reviewClicked: (String) -> Unit,
     onRetry: () -> Unit
 ) {
     val context = LocalContext.current
@@ -94,7 +93,6 @@ fun LoanApplicationScreen(
                         selectProduct = selectProduct,
                         selectPurpose = selectPurpose,
                         reviewClicked = reviewClicked,
-                        setPrincipalAmount = setPrincipalAmount,
                         setDisbursementDate = setDisbursementDate
                     )
                     when (uiState) {
@@ -142,7 +140,6 @@ fun ReviewLoanApplicationScreenPreview(
             selectPurpose = {},
             selectProduct = {},
             reviewClicked = {},
-            setPrincipalAmount = {},
             setDisbursementDate = {},
             onRetry = {},
         )
