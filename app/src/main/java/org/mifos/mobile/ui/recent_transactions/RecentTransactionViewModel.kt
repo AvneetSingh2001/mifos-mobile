@@ -1,4 +1,4 @@
-package org.mifos.mobile.viewModels
+package org.mifos.mobile.ui.recent_transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
