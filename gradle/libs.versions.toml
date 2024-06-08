@@ -48,6 +48,7 @@ preference = "1.0.0"
 playServicesVersion = "17.0.1"
 spotbugs = "4.8.0"
 material3 = "1.2.1"
+playServicesCodeScanner = "16.1.0"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityVersion" }
@@ -101,6 +102,7 @@ dbflow-core = { group = "com.github.Raizlabs.DBFlow", name = "dbflow-core", vers
 dbflow = { group = "com.github.Raizlabs.DBFlow", name = "dbflow", version.ref = "dbflowVersion" }
 androidx-preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesVersion" }
+google-play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "playServicesCodeScanner" }
 
 # Dependencies of the included build-logic
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }

@@ -176,7 +176,8 @@ dependencies {
     // google maps
     implementation ("com.google.maps.android:maps-compose:4.4.1")
 
-
+    // Google Bar code scanner
+    implementation(libs.google.play.services.code.scanner)
 }
 
 
