@@ -86,7 +86,7 @@ fun RecentTransactionScreenContent(
 
         Box(Modifier.nestedScroll(pullRefreshState.nestedScrollConnection))
         {
-            Column {
+            Column(modifier = Modifier.fillMaxSize()) {
 
                 when (uiState) {
 
