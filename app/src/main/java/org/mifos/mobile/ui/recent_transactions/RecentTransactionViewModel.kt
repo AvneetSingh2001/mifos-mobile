@@ -1,10 +1,13 @@
 package org.mifos.mobile.ui.recent_transactions
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import org.mifos.mobile.R
@@ -23,6 +26,16 @@ class RecentTransactionViewModel @Inject constructor(private val recentTransacti
         MutableStateFlow<RecentTransactionUiState>(RecentTransactionUiState.Initial)
     val recentTransactionUiState: StateFlow<RecentTransactionUiState> = _recentTransactionUiState
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> get() = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.emit(true)
+            loadRecentTransactions(false, 0)
+            _isRefreshing.emit(false)
+        }
+    }
     fun loadRecentTransactions(loadmore: Boolean, offset: Int) {
         this.loadmore = loadmore
         loadRecentTransactions(offset, limit)

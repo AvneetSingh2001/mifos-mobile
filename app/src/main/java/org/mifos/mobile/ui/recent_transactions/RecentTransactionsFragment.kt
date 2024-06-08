@@ -33,7 +33,6 @@ class RecentTransactionsFragment : BaseFragment() {
         setToolbarTitle(getString(R.string.recent_transactions))
         return ComposeView(requireContext()).apply {
             setContent {
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
                 MifosMobileTheme {
                     RecentTransactionScreen(
                         recentTransactionViewModel,

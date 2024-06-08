@@ -1,5 +1,6 @@
 package org.mifos.mobile.ui.recent_transactions
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,14 +13,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -48,67 +57,99 @@ fun RecentTransactionScreen(
     navigateBack: () -> Unit )
 {
     val uiState by viewModel.recentTransactionUiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+
     LaunchedEffect(key1 = Unit) {
         viewModel.loadRecentTransactions(false, 0)
     }
 
-    RecentTransactionScreen(
+    RecentTransactionScreenContent(
         uiState = uiState,
         navigateBack = navigateBack,
-        retryConnection = { viewModel.loadRecentTransactions(false, 0) }
+        retryConnection = { viewModel.loadRecentTransactions(false, 0) },
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() }
     )
 }
 
-
+@OptIn( ExperimentalMaterial3Api::class)
 @Composable
-fun RecentTransactionScreen(
+fun RecentTransactionScreenContent(
     uiState: RecentTransactionUiState,
     navigateBack: () -> Unit,
-    retryConnection: () -> Unit) {
+    retryConnection: () -> Unit,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit) {
 
     val context = LocalContext.current
-        Column(modifier = Modifier.fillMaxSize()) {
+    val pullRefreshState = rememberPullToRefreshState()
 
-            when (uiState) {
+        Box(Modifier.nestedScroll(pullRefreshState.nestedScrollConnection))
+        {
+            Column {
 
-                RecentTransactionUiState.EmptyTransaction -> {
-                    MifosErrorComponent(isEmptyData = true)
-                }
+                when (uiState) {
 
-                is RecentTransactionUiState.Error -> {
-                    MifosErrorComponent(
-                        isNetworkConnected = Network.isConnected(context),
-                        isEmptyData = false,
-                        isRetryEnabled = true,
-                        onRetry = retryConnection
-                    )
-                }
-
-                RecentTransactionUiState.Initial -> {
-                }
-
-                RecentTransactionUiState.Loading -> {
-                    MifosProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp)
-                            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))
-                    )
-                }
-
-                is RecentTransactionUiState.LoadMoreRecentTransactions -> {
-
-                }
-                is RecentTransactionUiState.RecentTransactions -> {
-                    if( uiState.transactions?.isNotEmpty() == true) {
-                        LoadRecentTransactions(transactionList = uiState.transactions as ArrayList<Transaction>)
-                    } else {
+                    RecentTransactionUiState.EmptyTransaction -> {
                         MifosErrorComponent(isEmptyData = true)
+                    }
+
+                    is RecentTransactionUiState.Error -> {
+                        MifosErrorComponent(
+                            isNetworkConnected = Network.isConnected(context),
+                            isEmptyData = false,
+                            isRetryEnabled = true,
+                            onRetry = retryConnection
+                        )
+                    }
+
+                    RecentTransactionUiState.Initial -> {
+                    }
+
+                    RecentTransactionUiState.Loading -> {
+
+                        MifosProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(10.dp)
+                                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))
+                        )
+                    }
+
+                    is RecentTransactionUiState.LoadMoreRecentTransactions -> {
+
+                    }
+
+                    is RecentTransactionUiState.RecentTransactions -> {
+
+                        if (uiState.transactions?.isNotEmpty() == true) {
+                            LoadRecentTransactions(transactionList = uiState.transactions as ArrayList<Transaction>)
+                        } else {
+                            MifosErrorComponent(isEmptyData = true)
+                        }
                     }
                 }
             }
+
+            if (pullRefreshState.isRefreshing) {
+                LaunchedEffect(key1 = true) {
+                    onRefresh()
+                }
+            }
+            LaunchedEffect(key1 = isRefreshing) {
+                if (isRefreshing)
+                    pullRefreshState.startRefresh()
+                else
+                    pullRefreshState.endRefresh()
+            }
+
+            PullToRefreshContainer(
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+
+                )
         }
-    }
+}
 
 
 @Composable
@@ -187,11 +228,10 @@ class RecentTransactionScreenPreviewProvider : PreviewParameterProvider<RecentTr
 private fun RecentTransactionScreenPreview(
     @PreviewParameter(RecentTransactionScreenPreviewProvider::class) recentTransactionUiState: RecentTransactionUiState
 ) {
-
     MifosMobileTheme {
-        RecentTransactionScreen(
+        RecentTransactionScreenContent(
             uiState = recentTransactionUiState,
-            navigateBack = { }) { }
+            navigateBack = {}, {},false , {})
     }
 }
 
