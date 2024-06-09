@@ -30,11 +30,8 @@ class RecentTransactionViewModel @Inject constructor(private val recentTransacti
     val isRefreshing: StateFlow<Boolean> get() = _isRefreshing.asStateFlow()
 
     fun refresh() {
-        viewModelScope.launch {
-            _isRefreshing.emit(true)
-            loadRecentTransactions(false, 0)
-            _isRefreshing.emit(false)
-        }
+        _isRefreshing.value = true
+        loadRecentTransactions(false, 0)
     }
     fun loadRecentTransactions(loadmore: Boolean, offset: Int) {
         this.loadmore = loadmore
@@ -57,6 +54,7 @@ class RecentTransactionViewModel @Inject constructor(private val recentTransacti
                     _recentTransactionUiState.value =
                         RecentTransactionUiState.RecentTransactions(it.pageItems)
                 }
+                _isRefreshing.emit(false)
             }
         }
     }
