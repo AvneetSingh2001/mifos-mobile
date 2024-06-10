@@ -264,12 +264,12 @@ class RecentTransactionScreenPreviewProvider : PreviewParameterProvider<RecentTr
 private fun RecentTransactionScreenPreview(
     @PreviewParameter(RecentTransactionScreenPreviewProvider::class) recentTransactionUiState: RecentTransactionUiState
 ) {
-/*
+    val viewmodel : RecentTransactionViewModel= hiltViewModel()
     MifosMobileTheme {
         RecentTransactionScreenContent(
             uiState = recentTransactionUiState,
-            navigateBack = {}, {}, false, {}, RecentTransactionViewModel
+            navigateBack = {}, {}, false, {}, viewmodel
         )
-    }*/
+    }
 }
 

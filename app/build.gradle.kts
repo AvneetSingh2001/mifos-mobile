@@ -160,11 +160,9 @@ dependencies {
 
     implementation("com.github.rahul-gill.mifos-ui-library:uihouse:alpha-2.1")
 
-    //swipe to pull refresh
-    implementation ("androidx.compose:compose-bom:2024.05.00")
-
     // Jetpack Compose
     api(libs.androidx.activity.compose)
+    api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.material3)
     api(libs.androidx.compose.foundation)
     api(libs.androidx.compose.foundation.layout)

@@ -3,7 +3,6 @@ appcompatVersion = "1.6.1"
 compileSdk = "34"
 constraintlayoutVersion = "2.1.4"
 coreKtxVersion = "1.12.0"
-materialPullrefreshVersion = "1.0.0"
 minSdk = "24"
 targetSdk = "34"
 androidGradlePlugin = "8.2.2"
@@ -69,7 +68,6 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest"}
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling"}
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
-androidx-material-pullrefresh = { module = "androidx.compose.material:material-pullrefresh", version.ref = "materialPullrefreshVersion" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview"}
