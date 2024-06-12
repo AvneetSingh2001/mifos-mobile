@@ -40,6 +40,7 @@ import org.mifos.mobile.ui.help.HelpActivity
 import org.mifos.mobile.ui.home.HomeOldFragment
 import org.mifos.mobile.ui.login.LoginActivity
 import org.mifos.mobile.ui.third_party_transfer.ThirdPartyTransferComposeFragment
+import org.mifos.mobile.ui.notification.NotificationFragment
 import org.mifos.mobile.utils.Constants
 import org.mifos.mobile.utils.TextDrawable
 import org.mifos.mobile.utils.Toaster
@@ -194,7 +195,7 @@ class HomeActivity :
             )
 
             R.id.item_third_party_transfer -> replaceFragment(
-                ThirdPartyTransferComposeFragment.newInstance(),
+                ThirdPartyTransferFragment.newInstance(),
                 true,
                 R.id.container,
             )
