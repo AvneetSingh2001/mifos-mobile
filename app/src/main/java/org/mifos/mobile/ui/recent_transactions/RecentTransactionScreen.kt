@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.getString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,6 +44,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.mifos.mobile.MifosSelfServiceApp
 import org.mifos.mobile.R
+import org.mifos.mobile.core.ui.component.EmptyDataView
 import org.mifos.mobile.core.ui.component.MifosErrorComponent
 import org.mifos.mobile.core.ui.component.MifosProgressIndicator
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
@@ -103,7 +105,7 @@ fun RecentTransactionScreenContent(
                 when (uiState) {
 
                     RecentTransactionUiState.EmptyTransaction -> {
-                        MifosErrorComponent( isEmptyData = true)
+                        EmptyDataView( modifier = Modifier.fillMaxSize() , R.drawable.ic_error_black_24dp, R.string.no_transaction, getString(context, R.string.no_transaction) )
                     }
 
                     is RecentTransactionUiState.Error -> {
@@ -145,7 +147,7 @@ fun RecentTransactionScreenContent(
                         if (uiState.transactions?.isNotEmpty() == true) {
                             LoadRecentTransactions(transactionList = uiState.transactions as ArrayList<Transaction>,lazyColumnState,uiState, viewModel)
                         } else {
-                            MifosErrorComponent(isEmptyData = true)
+                            EmptyDataView( modifier = Modifier.fillMaxSize() , R.drawable.ic_error_black_24dp, R.string.no_transaction, getString(context, R.string.no_transaction) )
                         }
                     }
                 }
@@ -205,7 +207,7 @@ fun RecentTransactionListItem(transaction: Transaction?) {
         Image(
             painter = painterResource(id = R.drawable.ic_local_atm_black_24dp),
             contentDescription = stringResource(id = R.string.atm_icon),
-            modifier = Modifier.size(39.dp)
+            modifier = Modifier.size(40.dp)
         )
 
         Spacer(modifier = Modifier.width(8.dp))

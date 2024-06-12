@@ -31,14 +31,10 @@ class RecentTransactionsFragment : BaseFragment() {
         savedInstanceState: Bundle?,
     ): View {
         setToolbarTitle(getString(R.string.recent_transactions))
-        return ComposeView(requireContext()).apply {
-            setContent {
-                MifosMobileTheme {
-                    RecentTransactionScreen(
-                        recentTransactionViewModel,
-                        navigateBack = { activity?.supportFragmentManager?.popBackStack() })
-                }
-            }
+        return mifosComposeView(requireContext()) {
+            RecentTransactionScreen(
+                recentTransactionViewModel,
+                navigateBack = { activity?.onBackPressedDispatcher?.onBackPressed() })
         }
     }
 
