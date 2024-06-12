@@ -3,10 +3,13 @@ package org.mifos.mobile.ui.third_party_transfer
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mifos.mobile.R
@@ -23,12 +26,12 @@ fun ThirdPartyTransferScreen(
     addBeneficiary: () -> Unit,
     reviewTransfer: (ThirdPartyTransferPayload) -> Unit
 ) {
-    val uiState = viewModel.thirdPartyTransferUiState.collectAsStateWithLifecycle()
-    val uiData = viewModel.thirdPartyTransferUiData.collectAsStateWithLifecycle()
+    val uiState by viewModel.thirdPartyTransferUiState.collectAsStateWithLifecycle()
+    val uiData by viewModel.thirdPartyTransferUiData.collectAsStateWithLifecycle()
 
     ThirdPartyTransferScreen(
-        uiState = uiState.value,
-        uiData = uiData.value,
+        uiState = uiState,
+        uiData = uiData,
         navigateBack = navigateBack,
         addBeneficiary = addBeneficiary,
         reviewTransfer = reviewTransfer
@@ -77,11 +80,24 @@ fun ThirdPartyTransferScreen(
     )
 }
 
+class SavingsMakeTransferUiStatesPreviews : PreviewParameterProvider<ThirdPartyTransferUiState> {
+    override val values: Sequence<ThirdPartyTransferUiState>
+        get() = sequenceOf(
+            ThirdPartyTransferUiState.ShowUI,
+            ThirdPartyTransferUiState.Error(""),
+            ThirdPartyTransferUiState.Loading,
+        )
+}
+
+@Preview(showSystemUi = true)
 @Composable
-@Preview
-fun ThirdPartyTransferScreenPreview() {
+fun ThirdPartyTransferScreenPreview(
+    @PreviewParameter(SavingsMakeTransferUiStatesPreviews::class) thirdPartyTransferUiState: ThirdPartyTransferUiState
+) {
     MifosMobileTheme {
         ThirdPartyTransferScreen(
+            uiState = thirdPartyTransferUiState,
+            uiData = ThirdPartyTransferUiData(),
             navigateBack = {},
             addBeneficiary = {},
             reviewTransfer = {}

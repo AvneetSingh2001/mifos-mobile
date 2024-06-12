@@ -11,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -33,23 +32,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import org.checkerframework.checker.units.qual.UnitsMultiple
 import org.mifos.mobile.R
 import org.mifos.mobile.core.ui.component.MFStepProcess
 import org.mifos.mobile.core.ui.component.MifosDropDownDoubleTextField
+import org.mifos.mobile.core.ui.component.MifosOutlinedTextButton
 import org.mifos.mobile.core.ui.component.MifosOutlinedTextField
+import org.mifos.mobile.core.ui.component.MifosTextButton
 import org.mifos.mobile.core.ui.component.StepProcessState
 import org.mifos.mobile.core.ui.component.getStepState
 import org.mifos.mobile.core.ui.theme.DarkGray
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.core.ui.theme.Primary
 import org.mifos.mobile.models.beneficiary.Beneficiary
-import org.mifos.mobile.models.beneficiary.BeneficiaryDetail
-import org.mifos.mobile.models.payload.AccountDetail
 import org.mifos.mobile.models.templates.account.AccountOption
-import org.mifos.mobile.ui.savings_make_transfer.ReviewTransferPayload
-import org.mifos.mobile.ui.savings_make_transfer.SavingsMakeTransferUiData
 
 @Composable
 fun ThirdPartyTransferContent(
@@ -226,11 +221,9 @@ fun BeneficiaryStep(
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.labelMedium
                 )
-                Button(
+                MifosTextButton(
                     onClick = { addBeneficiary() },
-                    content = {
-                        Text(text = stringResource(id = R.string.add_beneficiary))
-                    }
+                    textResId = R.string.add_beneficiary
                 )
             } else {
                 MifosDropDownDoubleTextField(
@@ -245,12 +238,13 @@ fun BeneficiaryStep(
                         beneficiaryError = false
                     }
                 )
-                Button(onClick = {
-                    if (beneficiary == null) beneficiaryError = true
-                    else onContinueClick(beneficiary!!)
-                }, content = {
-                    Text(text = stringResource(id = R.string.continue_str))
-                })
+                MifosTextButton(
+                    onClick = {
+                        if (beneficiary == null) beneficiaryError = true
+                        else onContinueClick(beneficiary!!)
+                    },
+                    textResId = R.string.continue_str
+                )
             }
         } else {
             Text(
@@ -299,7 +293,7 @@ fun EnterAmountStep(
                 supportingText = amountError?.let { stringResource(id = it) },
                 label = R.string.enter_amount,
             )
-            Button(
+            MifosTextButton(
                 onClick = {
                     if (amountError == null) {
                         onContinueClick(amount.text)
@@ -307,9 +301,7 @@ fun EnterAmountStep(
                         showAmountError = true
                     }
                 },
-                content = {
-                    Text(text = stringResource(id = R.string.continue_str))
-                }
+                textResId =  R.string.continue_str
             )
         } else {
             Text(
@@ -359,17 +351,17 @@ fun RemarkStep(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Row {
-                Button(
+                MifosTextButton(
                     onClick = {
                         remarkError?.let { showRemarkError = true }
                             ?: onContinueClicked(remark.text)
                     },
-                    content = { Text(text = stringResource(id = R.string.review)) }
+                    textResId = R.string.review
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                OutlinedButton(
+                MifosOutlinedTextButton(
                     onClick = { onCancelledClicked() },
-                    content = { Text(text = stringResource(id = R.string.cancel)) }
+                    textResId = R.string.cancel
                 )
             }
         } else {

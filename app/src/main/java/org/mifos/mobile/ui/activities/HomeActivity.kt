@@ -195,7 +195,7 @@ class HomeActivity :
             )
 
             R.id.item_third_party_transfer -> replaceFragment(
-                ThirdPartyTransferFragment.newInstance(),
+                ThirdPartyTransferComposeFragment.newInstance(),
                 true,
                 R.id.container,
             )
