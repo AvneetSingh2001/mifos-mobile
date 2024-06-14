@@ -33,9 +33,10 @@ import org.mifos.mobile.ui.enums.AccountType
 import org.mifos.mobile.ui.enums.ChargeType
 import org.mifos.mobile.ui.fragments.BeneficiaryListFragment
 import org.mifos.mobile.ui.fragments.ClientAccountsFragment
-import org.mifos.mobile.ui.fragments.ThirdPartyTransferFragment
 import org.mifos.mobile.ui.fragments.base.BaseFragment
+import org.mifos.mobile.ui.fragments.ClientChargeFragment
 import org.mifos.mobile.ui.savings_make_transfer.SavingsMakeTransferComposeFragment
+import org.mifos.mobile.ui.third_party_transfer.ThirdPartyTransferComposeFragment
 import org.mifos.mobile.ui.user_profile.UserProfileActivity
 import org.mifos.mobile.utils.Constants
 import org.mifos.mobile.utils.MaterialDialog
@@ -69,7 +70,6 @@ class HomeOldFragment : BaseFragment(), OnRefreshListener {
         setToolbarTitle(getString(R.string.home))
         showUserInterface()
         loadClientData()
-
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
@@ -262,7 +262,7 @@ class HomeOldFragment : BaseFragment(), OnRefreshListener {
                         )
                     } else {
                         (activity as HomeActivity?)?.replaceFragment(
-                            ThirdPartyTransferFragment.newInstance(),
+                            ThirdPartyTransferComposeFragment.newInstance(),
                             true,
                             R.id.container,
                         )
