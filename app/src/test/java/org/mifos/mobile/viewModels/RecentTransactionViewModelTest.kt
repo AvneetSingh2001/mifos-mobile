@@ -2,13 +2,11 @@ package org.mifos.mobile.viewModels
 
 import CoroutineTestRule
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.lifecycle.Observer
 import app.cash.turbine.test
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import okhttp3.ResponseBody
 import org.junit.*
 import org.junit.runner.RunWith
 import org.mifos.mobile.R
@@ -24,7 +22,6 @@ import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
-import retrofit2.Response
 
 @RunWith(MockitoJUnitRunner::class)
 class RecentTransactionViewModelTest {
@@ -80,7 +77,7 @@ class RecentTransactionViewModelTest {
         `when`(recentTransactionRepositoryImp.recentTransactions(offset, limit))
             .thenReturn(flowOf(transactions))
         viewModel.recentTransactionUiState.test {
-            viewModel.loadRecentTransactions(loadmore = false, offset)
+            viewModel.loadRecentTransactions(loadMore = false, offset)
             assertEquals(RecentTransactionUiState.Initial, awaitItem())
             assertEquals(RecentTransactionUiState.Loading, awaitItem())
             assertEquals(transactions.pageItems.let { RecentTransactionUiState.RecentTransactions(it) }, awaitItem())
@@ -108,7 +105,7 @@ class RecentTransactionViewModelTest {
         `when`(recentTransactionRepositoryImp.recentTransactions(offset, limit))
             .thenReturn(flowOf(transactions))
         viewModel.recentTransactionUiState.test {
-            viewModel.loadRecentTransactions(loadmore = false, offset)
+            viewModel.loadRecentTransactions(loadMore = false, offset)
             assertEquals(RecentTransactionUiState.Initial, awaitItem())
             assertEquals(RecentTransactionUiState.Loading, awaitItem())
             assertEquals(RecentTransactionUiState.EmptyTransaction, awaitItem())
@@ -138,7 +135,7 @@ class RecentTransactionViewModelTest {
             .thenReturn(flowOf(transactions))
 
         viewModel.recentTransactionUiState.test {
-            viewModel.loadRecentTransactions(loadmore = false, offset)
+            viewModel.loadRecentTransactions(loadMore = false, offset)
             assertEquals(RecentTransactionUiState.Initial, awaitItem())
             assertEquals(RecentTransactionUiState.Loading, awaitItem())
             assertEquals(transactions.pageItems.let { RecentTransactionUiState.RecentTransactions(it) }, awaitItem())

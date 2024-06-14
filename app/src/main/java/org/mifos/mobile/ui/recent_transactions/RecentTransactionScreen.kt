@@ -1,13 +1,12 @@
 package org.mifos.mobile.ui.recent_transactions
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -39,167 +39,147 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import org.mifos.mobile.MifosSelfServiceApp
 import org.mifos.mobile.R
 import org.mifos.mobile.core.ui.component.EmptyDataView
+import org.mifos.mobile.core.ui.component.MFScaffold
 import org.mifos.mobile.core.ui.component.MifosErrorComponent
 import org.mifos.mobile.core.ui.component.MifosProgressIndicator
+import org.mifos.mobile.core.ui.component.MifosProgressIndicatorOverlay
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.models.Transaction
-import org.mifos.mobile.repositories.RecentTransactionRepositoryImp
+import org.mifos.mobile.models.client.Type
 import org.mifos.mobile.utils.CurrencyUtil
 import org.mifos.mobile.utils.DateHelper
 import org.mifos.mobile.utils.Network
-import org.mifos.mobile.utils.RecentTransactionUiState
 import org.mifos.mobile.utils.Utils
 
 @Composable
 fun RecentTransactionScreen(
     viewModel: RecentTransactionViewModel = hiltViewModel(),
-    navigateBack: () -> Unit )
-{
+    navigateBack: () -> Unit
+) {
     val uiState by viewModel.recentTransactionUiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isPaginating by viewModel.isPaginating.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = Unit) {
-        viewModel.loadRecentTransactions(false, 0)
+        viewModel.loadInitialTransactions()
     }
 
-   RecentTransactionScreenContent(
+    RecentTransactionScreen(
         uiState = uiState,
         navigateBack = navigateBack,
-        retryConnection = { viewModel.loadRecentTransactions(false, 0) },
+        onRetry = { viewModel.loadInitialTransactions() },
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.refresh() },
-        viewModel= viewModel
+        isPaginating = isPaginating,
+        loadMore = { offset -> viewModel.loadPaginatedTransactions(offset) }
     )
 }
 
-@OptIn( ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentTransactionScreenContent(
+fun RecentTransactionScreen(
     uiState: RecentTransactionUiState,
     navigateBack: () -> Unit,
-    retryConnection: () -> Unit,
+    onRetry: () -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    viewModel: RecentTransactionViewModel
+    isPaginating: Boolean,
+    loadMore: (offset: Int) -> Unit
 ) {
-
     val context = LocalContext.current
     val pullRefreshState = rememberPullToRefreshState()
-    val scrollState = rememberScrollState()
-    val lazyColumnState = rememberLazyListState()
 
-        Box(
-            Modifier
-                .fillMaxSize()
-                .nestedScroll(pullRefreshState.nestedScrollConnection)){
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState), verticalArrangement = Arrangement.Center) {
-
+    MFScaffold(
+        topBarTitleResId = R.string.recent_transactions,
+        navigateBack = navigateBack,
+        scaffoldContent = { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues = paddingValues)) {
                 when (uiState) {
-
-                    RecentTransactionUiState.EmptyTransaction -> {
-                        EmptyDataView( modifier = Modifier.fillMaxSize() , R.drawable.ic_error_black_24dp, R.string.no_transaction, getString(context, R.string.no_transaction) )
-                    }
-
                     is RecentTransactionUiState.Error -> {
                         MifosErrorComponent(
                             isNetworkConnected = Network.isConnected(context),
-                            isEmptyData = false,
                             isRetryEnabled = true,
-                            onRetry = retryConnection
+                            onRetry = onRetry
                         )
                     }
 
-                    RecentTransactionUiState.Initial -> {
-
+                    is RecentTransactionUiState.Loading -> {
+                        MifosProgressIndicatorOverlay()
                     }
 
-                    RecentTransactionUiState.Loading -> {
-
-                        MifosProgressIndicator(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(10.dp)
-                                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))
-                        )
-                    }
-
-                    is RecentTransactionUiState.LoadMoreRecentTransactions -> {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            state = lazyColumnState
-                        ) {
-                            items(uiState.transactions) { transaction ->
-                                RecentTransactionListItem(transaction)
-                            }
-                        }
-                    }
-
-                    is RecentTransactionUiState.RecentTransactions -> {
-
-                        if (uiState.transactions?.isNotEmpty() == true) {
-                            LoadRecentTransactions(transactionList = uiState.transactions as ArrayList<Transaction>,lazyColumnState,uiState, viewModel)
+                    is RecentTransactionUiState.Success -> {
+                        if (uiState.transactions.isEmpty()) {
+                            EmptyDataView(
+                                icon = R.drawable.ic_error_black_24dp,
+                                error = R.string.no_transaction,
+                                modifier = Modifier.fillMaxSize()
+                            )
                         } else {
-                            EmptyDataView( modifier = Modifier.fillMaxSize() , R.drawable.ic_error_black_24dp, R.string.no_transaction, getString(context, R.string.no_transaction) )
+                            RecentTransactionsContent(
+                                transactions = uiState.transactions,
+                                isPaginating = isPaginating,
+                                loadMore = loadMore,
+                                canPaginate = uiState.canPaginate
+                            )
                         }
                     }
                 }
             }
+        }
+    )
 
-            if (pullRefreshState.isRefreshing) {
-                LaunchedEffect(key1 = true) {
-                    onRefresh()
-                }
-            }
-            LaunchedEffect(key1 = isRefreshing) {
-                if (isRefreshing)
-                    pullRefreshState.startRefresh()
-                else
-                    pullRefreshState.endRefresh()
-            }
-
-            PullToRefreshContainer(
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-            )
+    if (pullRefreshState.isRefreshing) {
+        LaunchedEffect(key1 = true) {
+            onRefresh()
+        }
+    }
+    LaunchedEffect(key1 = isRefreshing) {
+        if (isRefreshing)
+            pullRefreshState.startRefresh()
+        else
+            pullRefreshState.endRefresh()
     }
 
+    PullToRefreshContainer(
+        state = pullRefreshState,
+    )
 }
-
 
 @Composable
-fun LoadRecentTransactions(
-    transactionList: ArrayList<Transaction>,
-    lazyColumnState: LazyListState,
-    uiState: RecentTransactionUiState.RecentTransactions,
-    viewModel: RecentTransactionViewModel
-){
+fun RecentTransactionsContent(
+    transactions: List<Transaction>,
+    isPaginating: Boolean,
+    canPaginate: Boolean,
+    loadMore: (offset: Int) -> Unit
+) {
+    val lazyColumnState = rememberLazyListState()
 
-    LazyColumn(Modifier.fillMaxSize(),
-        state = lazyColumnState) {
-        items(items = transactionList?.toList().orEmpty()) {
-            RecentTransactionListItem(it)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        state = lazyColumnState
+    ) {
+        val visibleItems = lazyColumnState.layoutInfo.visibleItemsInfo
+        val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: 0
+        val isNearBottom = lastVisibleItemIndex >= transactions.size - 5
+
+        if (!isPaginating && canPaginate && isNearBottom) {
+            loadMore(transactions.size - 1)
         }
-        item {
-                val visibleItems = lazyColumnState.layoutInfo.visibleItemsInfo
-                val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: 0
-                val isNearBottom = lastVisibleItemIndex >= uiState.transactions.size - 5
 
-                if (isNearBottom) {
-                    viewModel.loadRecentTransactions(true, uiState.transactions.size)
-                }
+        items(items = transactions) { transaction ->
+            RecentTransactionListItem(transaction)
+        }
+
+        if(isPaginating) {
+            item {
+                MifosProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
         }
     }
-
 }
-
 
 @Composable
 fun RecentTransactionListItem(transaction: Transaction?) {
@@ -218,21 +198,15 @@ fun RecentTransactionListItem(transaction: Transaction?) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-
             Row {
                 Text(
                     text = stringResource(
                         id = R.string.string_and_string,
                         transaction?.currency?.displaySymbol ?: transaction?.currency?.code ?: "",
-                        CurrencyUtil.formatCurrency(
-                            MifosSelfServiceApp.context,
-                            transaction?.amount ?: 0.0,
-                        )
+                        CurrencyUtil.formatCurrency(MifosSelfServiceApp.context, transaction?.amount ?: 0.0,)
                     ),
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .weight(1f)
-                        .alpha(0.7f),
+                    modifier = Modifier.weight(1f).alpha(0.7f),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
@@ -249,28 +223,28 @@ fun RecentTransactionListItem(transaction: Transaction?) {
 
 
 class RecentTransactionScreenPreviewProvider : PreviewParameterProvider<RecentTransactionUiState> {
-
-    var tList : ArrayList<Transaction> = ArrayList<Transaction>()
     override val values: Sequence<RecentTransactionUiState>
         get() = sequenceOf(
-            RecentTransactionUiState.RecentTransactions(tList),
             RecentTransactionUiState.Loading,
-            RecentTransactionUiState.LoadMoreRecentTransactions(tList),
-            RecentTransactionUiState.Error(R.string.recent_transactions),
-            RecentTransactionUiState.EmptyTransaction,
-            RecentTransactionUiState.Initial
+            RecentTransactionUiState.Error(""),
+            RecentTransactionUiState.Success(listOf(), canPaginate = true)
         )
 }
-@Preview(showSystemUi = true, showBackground = true)
+
+@Preview(showSystemUi = true)
 @Composable
 private fun RecentTransactionScreenPreview(
     @PreviewParameter(RecentTransactionScreenPreviewProvider::class) recentTransactionUiState: RecentTransactionUiState
 ) {
-    val viewmodel : RecentTransactionViewModel= hiltViewModel()
     MifosMobileTheme {
-        RecentTransactionScreenContent(
+        RecentTransactionScreen(
             uiState = recentTransactionUiState,
-            navigateBack = {}, {}, false, {}, viewmodel
+            navigateBack = {},
+            onRetry = {},
+            isRefreshing = false,
+            onRefresh = {},
+            isPaginating = false,
+            loadMore = {}
         )
     }
 }
