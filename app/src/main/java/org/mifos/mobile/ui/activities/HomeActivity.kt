@@ -39,9 +39,6 @@ import org.mifos.mobile.ui.getThemeAttributeColor
 import org.mifos.mobile.ui.help.HelpActivity
 import org.mifos.mobile.ui.home.HomeOldFragment
 import org.mifos.mobile.ui.login.LoginActivity
-import org.mifos.mobile.ui.third_party_transfer.ThirdPartyTransferComposeFragment
-import org.mifos.mobile.ui.notification.NotificationFragment
-import org.mifos.mobile.ui.recent_transactions.RecentTransactionsComposeFragment
 import org.mifos.mobile.utils.Constants
 import org.mifos.mobile.utils.TextDrawable
 import org.mifos.mobile.utils.Toaster

@@ -2,90 +2,85 @@ package org.mifos.mobile.core.ui.component
 
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.compose.ui.window.Dialog
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 
 @Composable
-fun MifosRadioButtonAlertDialog(
-    setTitle: String,
-    setSingleChoiceItems: Array<String>,
-    onClick: (index: Int) -> Unit,
+fun MifosRadioButtonDialog(
+    titleResId: Int,
+    selectedItem: String,
+    items: Array<String>,
+    selectItem: (item: String, index: Int) -> Unit,
     onDismissRequest: () -> Unit,
-    setSelectedItemValue: String,
 ) {
-
-    AlertDialog(
-        onDismissRequest = { onDismissRequest.invoke() },
-        confirmButton = { },
-        title = {
-            Text(text = setTitle)
-        },
-        text = {
+    Dialog(
+        onDismissRequest = { onDismissRequest.invoke() }
+    ){
+        Card {
+            Column(modifier = Modifier.padding(20.dp)) {
+            Text(text = stringResource(id = titleResId))
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 500.dp)
             ) {
-                items(setSingleChoiceItems.size) { index ->
-                    val option = setSingleChoiceItems[index]
+                itemsIndexed(items = items) { index, item ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .clickable {
                                 onDismissRequest.invoke()
-                                onClick.invoke(index)
+                                selectItem.invoke(item, index)
                             }
                             .fillMaxWidth()
                     ) {
                         RadioButton(
-                            selected = (option == setSelectedItemValue),
+                            selected = (item == selectedItem),
                             onClick = {
                                 onDismissRequest.invoke()
-                                onClick.invoke(index)
+                                selectItem.invoke(item, index)
                             }
                         )
                         Text(
-                            text = option,
+                            text = item,
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
                 }
             }
+                }
         }
-    )
+    }
 }
 
-@Preview(showSystemUi = true)
+@Preview
 @Composable
 fun PreviewRadioButtonDialog() {
     MifosMobileTheme {
-        MifosRadioButtonAlertDialog(
-            setTitle = "Select an Option",
-            setSingleChoiceItems = arrayOf("1", "2", "3"),
-            onClick = { },
+        MifosRadioButtonDialog(
+            titleResId = 1,
+            items = arrayOf("1", "2", "3"),
+            selectedItem = "1",
             onDismissRequest = {  },
-            setSelectedItemValue = "1"
+            selectItem = { _, _ ->}
         )
     }
 }

@@ -1,7 +1,10 @@
 package org.mifos.mobile.ui.settings
 
+import android.content.Context
+import android.widget.Space
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,101 +16,144 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.mifos.mobile.R
-import org.mifos.mobile.core.ui.component.MifosRadioButtonAlertDialog
-import org.mifos.mobile.core.ui.component.MifosTopBar
+import org.mifos.mobile.core.ui.component.MFScaffold
+import org.mifos.mobile.core.ui.component.MifosRadioButtonDialog
+import org.mifos.mobile.core.ui.component.MifosTopBarTitle
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
+import org.mifos.mobile.utils.AppTheme
+import org.mifos.mobile.utils.LanguageHelper
+import org.mifos.mobile.utils.MifosAppLanguage
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(
-    settingsCard: List<SettingsCardItem>,
-    settingsCardClicked: (SettingsCardItem) -> Unit,
-    onBackPressed: () -> Unit,
-    handleEndpointupdate: (etBaseURL: String, etTenant: String) -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
-    getSelectedLanguageIndex: () -> Int,
-    updateLanguage: (language: String) -> Unit,
-    getSelectedThemeIndex: () -> Int,
-    updateTheme: (selectedTheme: Int) -> Unit
+    navigateBack: () -> Unit,
+    navigateToLoginScreen: () -> Unit,
+    changePassword: () -> Unit,
+    changePasscode: (String) -> Unit,
+    languageChanged: () -> Unit
 ) {
+
+    val baseURL = viewModel.baseUrl.collectAsStateWithLifecycle()
+    val tenant = viewModel.tenant.collectAsStateWithLifecycle()
+    val passcode = viewModel.passcode.collectAsStateWithLifecycle()
+    val theme = viewModel.theme.collectAsStateWithLifecycle()
+    val language = viewModel.language.collectAsStateWithLifecycle()
+
     val context = LocalContext.current
 
-    Scaffold(
+    SettingsScreen(
+        navigateBack = navigateBack,
+        selectedLanguage = language.value,
+        selectedTheme = theme.value,
+        baseURL = baseURL.value ?: "",
+        tenant = tenant.value ?: "",
+        updateLanguage = {
+            val isSystemLanguage = viewModel.updateLanguage(it)
+            updateLanguageLocale(context = context, language = language.value, isSystemLanguage = isSystemLanguage)
+            languageChanged()
+        },
+        updateTheme = { viewModel.updateTheme(it) },
+        changePassword = changePassword,
+        changePasscode = { changePasscode(passcode.value ?: "") },
+        handleEndpointUpdate = { baseURL, tenant ->
+            if(viewModel.tryUpdatingEndpoint(selectedBaseUrl = baseURL, selectedTenant = tenant)) {
+                navigateToLoginScreen()
+            }
+        },
+    )
+}
+
+
+@Composable
+fun SettingsScreen(
+    navigateBack: () -> Unit,
+    selectedLanguage: MifosAppLanguage,
+    selectedTheme: AppTheme,
+    baseURL: String,
+    tenant: String,
+    changePassword: () -> Unit,
+    changePasscode: () -> Unit,
+    handleEndpointUpdate: (baseURL: String, tenant: String) -> Unit,
+    updateTheme: (theme: AppTheme) -> Unit,
+    updateLanguage: (language: MifosAppLanguage) -> Unit
+) {
+
+    var showLanguageUpdateDialog by rememberSaveable { mutableStateOf(false) }
+    var showEndpointUpdateDialog by rememberSaveable { mutableStateOf(false) }
+    var showThemeUpdateDialog by rememberSaveable { mutableStateOf(false) }
+
+    MFScaffold(
         topBar = {
-            MifosTopBar(
-                navigateBack = { onBackPressed.invoke() },
-                title = {
-                    Text(text = stringResource(id = R.string.settings))
-                }
+            MifosTopBarTitle(
+                navigateBack = navigateBack,
+                topBarTitleResId = R.string.settings
             )
-        })
-    {
+        }
+    ) {
         Column(
             Modifier.padding(it)
         ) {
             SettingsCards(
-                settingsCardClicked = settingsCardClicked,
-                settingsCards = settingsCard
+                settingsCardClicked = { item ->
+                    when(item) {
+                        SettingsCardItem.PASSWORD -> changePassword()
+                        SettingsCardItem.PASSCODE -> changePasscode()
+                        SettingsCardItem.LANGUAGE -> showLanguageUpdateDialog = true
+                        SettingsCardItem.THEME -> showThemeUpdateDialog = true
+                        SettingsCardItem.ENDPOINT -> showEndpointUpdateDialog = true
+                    }
+                }
             )
         }
     }
 
-    if (viewModel.invokeEndpointUpdate) {
+    if(showLanguageUpdateDialog) {
+        MifosRadioButtonDialog(
+            titleResId = R.string.choose_language,
+            items = stringArrayResource(R.array.languages),
+            selectItem = { _, index -> updateLanguage(MifosAppLanguage.entries[index]) },
+            onDismissRequest = { showLanguageUpdateDialog = false },
+            selectedItem = selectedLanguage.displayName
+        )
+    }
+
+    if(showThemeUpdateDialog) {
+        MifosRadioButtonDialog(
+            titleResId = R.string.change_app_theme,
+            items = AppTheme.entries.map { it.themeName }.toTypedArray(),
+            selectItem = { _, index -> updateTheme(AppTheme.entries[index]) },
+            onDismissRequest = { showThemeUpdateDialog = false },
+            selectedItem = selectedTheme.themeName
+        )
+    }
+
+    if(showEndpointUpdateDialog) {
         UpdateEndpointDialogScreen(
-            initialBaseURL = viewModel.getBaseUrl(),
-            initialTenant = viewModel.getTenant(),
-            updateInvokeEndpointValue = {
-                Snapshot.withMutableSnapshot {
-                    viewModel.invokeEndpointUpdate = false
-                }
-            },
-            handleEndpointUpdate = handleEndpointupdate
-        )
-    }
-
-    if (viewModel.invokeLanguageUpdate) {
-        MifosRadioButtonAlertDialog(
-            setTitle = stringResource(id = R.string.choose_language),
-            setSingleChoiceItems = context.resources.getStringArray(R.array.languages),
-            onClick = {
-                updateLanguage.invoke(context.resources.getStringArray(R.array.languages_value)[it])
-            },
-            onDismissRequest = {
-                Snapshot.withMutableSnapshot {
-                    viewModel.invokeLanguageUpdate = false
-                }
-            },
-            setSelectedItemValue = context.resources.getStringArray(R.array.languages)[getSelectedLanguageIndex.invoke()]
-        )
-    }
-
-    if (viewModel.invokeThemeUpdate) {
-        MifosRadioButtonAlertDialog(
-            setTitle = stringResource(id = R.string.change_app_theme),
-            setSingleChoiceItems = context.resources.getStringArray(R.array.themes),
-            onClick = {
-                updateTheme.invoke(it)
-            },
-            onDismissRequest = {
-                Snapshot.withMutableSnapshot {
-                    viewModel.invokeThemeUpdate = false
-                }
-            },
-            setSelectedItemValue = context.resources.getStringArray(R.array.themes)[getSelectedThemeIndex.invoke()]
+            initialBaseURL = baseURL,
+            initialTenant = tenant,
+            onDismissRequest = { showEndpointUpdateDialog = false },
+            handleEndpointUpdate = handleEndpointUpdate
         )
     }
 }
@@ -115,10 +161,9 @@ fun SettingsScreen(
 @Composable
 fun SettingsCards(
     settingsCardClicked: (SettingsCardItem) -> Unit,
-    settingsCards: List<SettingsCardItem>
 ) {
     LazyColumn {
-        items(settingsCards) { card ->
+        items(SettingsCardItem.entries) { card ->
             if (card.firstItemInSubclass) {
                 TitleCard(title = card.subclassOf)
             }
@@ -127,23 +172,18 @@ fun SettingsCards(
                 title = card.title,
                 details = card.details,
                 icon = card.icon,
-                onclick = {
-                    settingsCardClicked(card)
-                }
+                onclick = { settingsCardClicked(card) }
             )
 
             if (card.showDividerInBottom) {
                 HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(0.1.dp),
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = .3f)
+                    modifier = Modifier.fillMaxWidth().height(1.dp),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                 )
             }
         }
     }
 }
-
 
 @Composable
 fun SettingsCardItem(
@@ -153,16 +193,11 @@ fun SettingsCardItem(
     onclick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         shape = RoundedCornerShape(0.dp),
-        onClick = {
-            onclick.invoke()
-        })
-    {
+        onClick = { onclick.invoke() }
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 16.dp),
@@ -170,10 +205,10 @@ fun SettingsCardItem(
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = null,
-                modifier = Modifier.weight(.2f)
+                modifier = Modifier.weight(0.2f)
             )
             Column(
-                modifier = Modifier.weight(.8f)
+                modifier = Modifier.weight(0.8f)
             ) {
                 Text(
                     text = stringResource(id = title),
@@ -182,7 +217,7 @@ fun SettingsCardItem(
                 Text(
                     modifier = Modifier.padding(end = 16.dp),
                     text = stringResource(id = details),
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = .7f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -190,25 +225,32 @@ fun SettingsCardItem(
     }
 }
 
-
 @Composable
 fun TitleCard(
     title: Int
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 10.dp)
-    ) {
-        Text(
-            text = "",
-            modifier = Modifier.weight(.2f)
-        )
+    Spacer(modifier = Modifier.height(16.dp))
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.weight(0.2f))
         Text(
             text = stringResource(id = title),
-            modifier = Modifier.weight(.8f),
+            modifier = Modifier.weight(0.8f),
             fontSize = 14.sp
         )
+    }
+    Spacer(modifier = Modifier.height(12.dp))
+}
+
+fun updateLanguageLocale(context: Context, language: MifosAppLanguage, isSystemLanguage: Boolean) {
+    if (!isSystemLanguage) {
+        LanguageHelper.setLocale(context, language.code)
+    } else {
+        val systemLanguageCode = Locale.getDefault().language
+        if (MifosAppLanguage.entries.find { it.code == systemLanguageCode } == null) {
+            LanguageHelper.setLocale(context, MifosAppLanguage.ENGLISH.code)
+        } else {
+            LanguageHelper.setLocale(context, systemLanguageCode)
+        }
     }
 }
 
@@ -217,14 +259,16 @@ fun TitleCard(
 fun PreviewSettingsScreen() {
     MifosMobileTheme {
         SettingsScreen(
-            settingsCard = (listOf()),
-            settingsCardClicked = {},
-            onBackPressed = {},
-            handleEndpointupdate = { _, _ -> },
-            getSelectedLanguageIndex = { 0 },
+            selectedLanguage = MifosAppLanguage.SYSTEM_LANGUAGE,
+            selectedTheme = AppTheme.SYSTEM,
+            baseURL = "",
+            tenant = "",
+            handleEndpointUpdate = { _, _ -> },
             updateLanguage = {},
             updateTheme = {},
-            getSelectedThemeIndex = { 2 }
+            navigateBack = {},
+            changePassword = {},
+            changePasscode = {}
         )
     }
 }

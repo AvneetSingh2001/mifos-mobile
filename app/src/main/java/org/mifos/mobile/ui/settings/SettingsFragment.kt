@@ -2,212 +2,163 @@ package org.mifos.mobile.ui.settings
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.runtime.snapshots.Snapshot.Companion.withMutableSnapshot
-import androidx.fragment.app.viewModels
-import androidx.preference.PreferenceManager
+import androidx.fragment.app.DialogFragment
+import androidx.preference.ListPreference
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.mifos.mobile.passcode.utils.PasscodePreferencesHelper
 import dagger.hilt.android.AndroidEntryPoint
 import org.mifos.mobile.R
 import org.mifos.mobile.api.local.PreferencesHelper
-import org.mifos.mobile.core.ui.component.mifosComposeView
-import org.mifos.mobile.core.ui.theme.MifosMobileTheme
-import org.mifos.mobile.ui.activities.HomeActivity
 import org.mifos.mobile.ui.activities.PassCodeActivity
 import org.mifos.mobile.ui.activities.base.BaseActivity
-import org.mifos.mobile.ui.fragments.base.BaseFragment
-import org.mifos.mobile.ui.login.LoginActivity
 import org.mifos.mobile.ui.update_password.UpdatePasswordFragment
+import org.mifos.mobile.utils.ConfigurationDialogFragmentCompat
+import org.mifos.mobile.utils.ConfigurationPreference
 import org.mifos.mobile.utils.Constants
 import org.mifos.mobile.utils.LanguageHelper
 import java.util.Locale
 
+/**
+ * Created by dilpreet on 02/10/17.
+ */
 @AndroidEntryPoint
-class SettingsFragment : BaseFragment(), SharedPreferences.OnSharedPreferenceChangeListener {
+class SettingsFragment : PreferenceFragmentCompat(), OnSharedPreferenceChangeListener {
 
-    private val viewModel: SettingsViewModel by viewModels()
     private val prefsHelper by lazy { PreferencesHelper(requireContext().applicationContext) }
+    var preference: android.preference.Preference? = null
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
-        return mifosComposeView(requireContext()) {
-            MifosMobileTheme {
-                SettingsScreen(
-                    settingsCard = viewModel.getSettingsCards(),
-                    settingsCardClicked = { handleSettingsCardClick(it) },
-                    onBackPressed = { goBackToPreviousScreen() },
-                    handleEndpointupdate = { etBaseURL, etTenant ->
-                        handleEndpointUpdate(etBaseURL, etTenant)
-                    },
-                    getSelectedLanguageIndex = {
-                        getSelectedLanguageIndex()
-                    },
-                    updateLanguage = {
-                        updateLanguage(it)
-                    },
-                    getSelectedThemeIndex = {
-                        getCurrentTheme()
-                    },
-                    updateTheme = {
-                        updateTheme(selectedTheme = it)
-                    }
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        addPreferencesFromResource(R.xml.settings_preference)
+        findPreference(getString(R.string.theme_type)).setOnPreferenceClickListener {
+            val previouslySelectedTheme = prefsHelper.appTheme
 
-                )
-            }
-        }
-    }
-
-    private fun handleSettingsCardClick(settingsCardItem: SettingsCardItem) {
-        when (settingsCardItem) {
-            is SettingsCardItem.Password -> changePassword()
-            is SettingsCardItem.Passcode -> changePasscode()
-            is SettingsCardItem.Language -> changeLanguage()
-            is SettingsCardItem.Theme -> changeTheme()
-            is SettingsCardItem.EndPoint -> updateEndpoint()
-        }
-    }
-
-    private fun changePassword() {
-        (activity as BaseActivity?)?.replaceFragment(
-            UpdatePasswordFragment.newInstance(),
-            true,
-            R.id.container,
-        )
-    }
-
-    private fun changePasscode() {
-        val passCodePreferencesHelper = PasscodePreferencesHelper(activity)
-        val currPassCode = passCodePreferencesHelper.passCode
-        val intent = Intent(activity, PassCodeActivity::class.java).apply {
-            putExtra(Constants.CURR_PASSWORD, currPassCode)
-            putExtra(Constants.IS_TO_UPDATE_PASS_CODE, true)
-        }
-        startActivity(intent)
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, p1: String?) {
-        if (p1 == getString(R.string.language_type)) {
-            val languageValue = sharedPreferences?.getString(p1, null)
-            languageValue?.let {
-                val isSystemLanguage = (it == resources.getStringArray(R.array.languages_value)[0])
-                prefsHelper.putBoolean(
-                    getString(R.string.default_system_language), isSystemLanguage
-                )
-                if (!isSystemLanguage) {
-                    LanguageHelper.setLocale(requireContext(), it)
-                } else {
-                    if (!resources.getStringArray(R.array.languages_value)
-                            .contains(Locale.getDefault().language)
-                    ) {
-                        LanguageHelper.setLocale(requireContext(), "en")
-                    } else {
-                        LanguageHelper.setLocale(requireContext(), Locale.getDefault().language)
-                    }
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.change_app_theme))
+                .setSingleChoiceItems(
+                    resources.getStringArray(R.array.themes),
+                    previouslySelectedTheme,
+                ) { dialog, selectedTheme ->
+                    prefsHelper.applyTheme(AppTheme.fromIndex(selectedTheme))
+                    dialog.dismiss()
                 }
-                val intent = Intent(activity, activity?.javaClass)
-                intent.putExtra(Constants.HAS_SETTINGS_CHANGED, true)
-                startActivity(intent)
-                activity?.finish()
+                .show()
+            return@setOnPreferenceClickListener true
+        }
+        findPreference(getString(R.string.passcode)).setOnPreferenceClickListener {
+            val passCodePreferencesHelper = PasscodePreferencesHelper(activity)
+            val currPassCode = passCodePreferencesHelper.passCode
+            passCodePreferencesHelper.savePassCode("")
+            val intent = Intent(activity, PassCodeActivity::class.java).apply {
+                putExtra(Constants.CURR_PASSWORD, currPassCode)
+                putExtra(Constants.IS_TO_UPDATE_PASS_CODE, true)
             }
+            preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+            startActivity(intent)
+            true
         }
-    }
+        when (preference?.key) {
+            getString(R.string.password) -> {
+                //    TODO("create changePasswordActivity and implement the logic for password change")
+            }
 
-
-    private fun changeLanguage() {
-        withMutableSnapshot {
-            viewModel.invokeLanguageUpdate = true
-        }
-    }
-
-    private fun updateLanguage(language: String) {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        sharedPreferences.edit().putString(getString(R.string.language_type), language).apply()
-    }
-
-    private fun getSelectedLanguageIndex(): Int {
-        var selectedLanguageValue: String? =
-            prefsHelper.getString(getString(R.string.language_type), null)
-        val languageValuesArray = resources.getStringArray(R.array.languages_value)
-
-        if (!(languageValuesArray.contains(selectedLanguageValue))) {
-            if (languageValuesArray.contains(Locale.getDefault().language)) {
-                selectedLanguageValue = "System_Language"
-            } else selectedLanguageValue = "en"
-        }
-        return languageValuesArray.indexOf(selectedLanguageValue)
-    }
-
-    private fun getCurrentTheme() : Int{
-        return prefsHelper.appTheme
-    }
-
-    private fun updateTheme(selectedTheme : Int){
-        prefsHelper.applyTheme(AppTheme.fromIndex(selectedTheme))
-        prefsHelper.applySavedTheme()
-    }
-
-    private fun changeTheme(){
-        withMutableSnapshot {
-            viewModel.invokeThemeUpdate = true
-        }
-    }
-
-    private fun updateEndpoint() {
-        withMutableSnapshot {
-            viewModel.invokeEndpointUpdate = true
-        }
-    }
-
-    private fun handleEndpointUpdate(etBaseURL: String, etTenant: String) {
-        val intentToLogin = viewModel.tryUpdatingEndpoint(etBaseURL, etTenant)
-        if (intentToLogin) {
-            val loginIntent = Intent(activity, LoginActivity::class.java)
-            loginIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(loginIntent)
-            activity?.finish()
-        }
-    }
-
-    private fun goBackToPreviousScreen() {
-        val settingsActivity = activity as? SettingsActivity
-        val hasSettingsChanged = settingsActivity?.hasSettingsChanged
-
-        if (hasSettingsChanged == true) {
-            activity?.finish()
-            startActivity(Intent(activity, HomeActivity::class.java))
-        } else {
-            activity?.finish()
+            getString(R.string.passcode) -> {
+                activity?.let {
+                    val passCodePreferencesHelper = PasscodePreferencesHelper(activity)
+                    val currPassCode = passCodePreferencesHelper.passCode
+                    passCodePreferencesHelper.savePassCode("")
+                    val intent = Intent(it, PassCodeActivity::class.java).apply {
+                        putExtra(Constants.CURR_PASSWORD, currPassCode)
+                        putExtra(Constants.IS_TO_UPDATE_PASS_CODE, true)
+                    }
+                    preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+                    startActivity(intent)
+                }
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .registerOnSharedPreferenceChangeListener(this)
+        (activity as? BaseActivity)?.showToolbar()
+        activity?.title = getString(R.string.settings)
+        preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
     }
 
     override fun onPause() {
         super.onPause()
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .unregisterOnSharedPreferenceChangeListener(this)
+        preferenceScreen.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
+    }
+
+    override fun onDisplayPreferenceDialog(preference: Preference) {
+        var dialogFragment: DialogFragment? = null
+        if (preference is ConfigurationPreference) {
+            dialogFragment = ConfigurationDialogFragmentCompat()
+            val bundle = Bundle(1)
+            bundle.putString("key", preference.getKey())
+            dialogFragment.setArguments(bundle)
+        }
+        if (dialogFragment != null) {
+            dialogFragment.setTargetFragment(this, 0)
+            dialogFragment.show(
+                parentFragmentManager,
+                "android.support.v7.preference.PreferenceFragment.DIALOG",
+            )
+        } else {
+            super.onDisplayPreferenceDialog(preference)
+        }
+    }
+
+    override fun onPreferenceTreeClick(preference: Preference): Boolean {
+        when (preference.key) {
+            Constants.PASSWORD -> (activity as BaseActivity?)?.replaceFragment(
+                UpdatePasswordFragment.newInstance(),
+                true,
+                R.id.container,
+            )
+        }
+        return super.onPreferenceTreeClick(preference)
     }
 
     companion object {
+        @JvmStatic
         fun newInstance(): SettingsFragment {
             return SettingsFragment()
         }
     }
-}
 
+    override fun onSharedPreferenceChanged(p0: SharedPreferences?, p1: String?) {
+        val preference = findPreference(p1)
+        if (preference is ListPreference) {
+            val isSystemLanguage =
+                (preference.value == resources.getStringArray(R.array.languages_value)[0])
+            prefsHelper.putBoolean(
+                context?.getString(R.string.default_system_language),
+                isSystemLanguage
+            )
+            if (!isSystemLanguage) {
+                LanguageHelper.setLocale(context, preference.value)
+            } else {
+                if (!resources.getStringArray(R.array.languages_value)
+                        .contains(Locale.getDefault().language)
+                ) {
+                    LanguageHelper.setLocale(context, "en")
+                } else {
+                    LanguageHelper.setLocale(context, Locale.getDefault().language)
+                }
+            }
+            val intent = Intent(activity, activity?.javaClass)
+            intent.putExtra(Constants.HAS_SETTINGS_CHANGED, true)
+            startActivity(intent)
+            activity?.finish()
+        }
+    }
+}
 
 enum class AppTheme {
     SYSTEM, LIGHT, DARK;
@@ -220,7 +171,6 @@ enum class AppTheme {
         }
     }
 }
-
 
 fun PreferencesHelper.applySavedTheme() {
     val applicationTheme = AppTheme.fromIndex(this.appTheme)
@@ -244,5 +194,4 @@ fun PreferencesHelper.applyTheme(applicationTheme: AppTheme) {
             else -> AppCompatDelegate.MODE_NIGHT_NO
         },
     )
-
 }
