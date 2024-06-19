@@ -170,6 +170,8 @@
         transfer
     </string>
 
+    <string name="empty_requestid">Request ID cannot be empty</string>
+    <string name="empty_authentication_token">Authentication Token cannot be empty</string>
     <string name="empty_savings_accounts">There is no SavingsAccount associated with you</string>
     <string name="empty_loan_accounts">There is no LoanAccount associated with you</string>
     <string name="empty_share_accounts">There is no ShareAccount associated with you</string>
@@ -598,7 +600,7 @@
     <string name="or">or</string>
     <string name="no_app_to_support_action">There is no application that support this action</string>
     <string name="theme">Theme</string>
-    <string name="change_app_theme">Change the application theme</string>
+    <string name="change_app_theme">Change theme</string>
 
     <string-array name="languages" translatable="false">
         <item>System Language</item>
@@ -665,4 +667,5 @@
     <string name="guarantor_updated_successfully">Guarantor updated successfully</string>
     <string name="required">Required</string>
     <string name="s_no">S.No</string>
+    <string name="no_transaction_found">No Transaction Found</string>
 </resources>

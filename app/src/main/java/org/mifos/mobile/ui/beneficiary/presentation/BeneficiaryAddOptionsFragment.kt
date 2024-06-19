@@ -15,9 +15,9 @@ import org.mifos.mobile.R
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.databinding.FragmentBeneficiaryAddOptionsBinding
 import org.mifos.mobile.ui.activities.base.BaseActivity
+import org.mifos.mobile.ui.beneficiary_application.BeneficiaryApplicationComposeFragment
 import org.mifos.mobile.ui.enums.BeneficiaryState
 import org.mifos.mobile.ui.enums.RequestAccessType
-import org.mifos.mobile.ui.fragments.BeneficiaryApplicationFragment
 import org.mifos.mobile.ui.fragments.QrCodeImportFragment
 import org.mifos.mobile.ui.qr.QrCodeReaderFragment
 import org.mifos.mobile.ui.fragments.base.BaseFragment
@@ -49,7 +49,9 @@ class BeneficiaryAddOptionsFragment : BaseFragment() {
 
                 MifosMobileTheme {
                     BeneficiaryScreen(
-                        topAppbarNavigateback = {},
+                        topAppbarNavigateback = {
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                        },
                         addiconClicked = { addManually() },
                         scaniconClicked = { addUsingQrCode() },
                         uploadiconClicked = { addByImportingQrCode() }
@@ -67,7 +69,7 @@ class BeneficiaryAddOptionsFragment : BaseFragment() {
      */
     fun addManually() {
         (activity as BaseActivity?)?.replaceFragment(
-            BeneficiaryApplicationFragment.newInstance(
+            BeneficiaryApplicationComposeFragment.newInstance(
                 BeneficiaryState.CREATE_MANUAL,
                 null,
             ),
@@ -251,9 +253,12 @@ class BeneficiaryAddOptionsFragment : BaseFragment() {
         _binding = null
     }
 
+    override fun onResume() {
+        super.onResume()
+        (activity as? BaseActivity)?.hideToolbar()
+    }
 
     companion object {
-        @JvmStatic
         fun newInstance(): BeneficiaryAddOptionsFragment {
             val fragment = BeneficiaryAddOptionsFragment()
             val args = Bundle()
