@@ -182,7 +182,13 @@ dependencies {
     implementation ("com.google.maps.android:maps-compose:4.4.1")
 
     // Google Bar code scanner
-    implementation(libs.google.play.services.code.scanner)
+    implementation(libs.google.app.code.scanner)
+
+    //cameraX
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.core)
 }
 
 

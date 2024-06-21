@@ -1,21 +1,22 @@
 package org.mifos.mobile.ui.qr
 
-import android.util.Log
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import androidx.compose.ui.unit.dp
 import org.mifos.mobile.R
 import org.mifos.mobile.core.ui.component.MFScaffold
+import org.mifos.mobile.core.ui.component.MifosIcons
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 
 @Composable
@@ -27,11 +28,7 @@ fun QrCodeReaderScreen(
         topBarTitleResId = R.string.add_beneficiary,
         navigateBack = navigateBack,
         scaffoldContent = {
-            Box(
-                modifier = Modifier
-                    .padding(it)
-                    .fillMaxSize()
-            ) {
+            Box(modifier = Modifier.padding(it).fillMaxSize()) {
                 QrCodeReaderContent(
                     qrScanned = qrScanned,
                     navigateBack = navigateBack
@@ -46,31 +43,35 @@ fun QrCodeReaderContent(
     qrScanned: (String) -> Unit,
     navigateBack: () -> Unit
 ) {
-    val context = LocalContext.current
+    val camera = remember { BarcodeCamera() }
+    var isFlashOn by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        val options = GmsBarcodeScannerOptions.Builder()
-            .setBarcodeFormats(
-                Barcode.FORMAT_QR_CODE,
-                Barcode.FORMAT_AZTEC
-            )
-            .build()
+    Box {
+        camera.BarcodeReaderCamera(
+            onBarcodeScanned = { barcode ->
+                barcode?.let {
+                    qrScanned(it)
+                    navigateBack()
+                }
+            },
+            isFlashOn = isFlashOn,
+        )
 
-        val scanner = GmsBarcodeScanning.getClient(context, options)
-
-        scanner.startScan()
-            .addOnSuccessListener { barcode ->
-                barcode.rawValue?.let { qrScanned(it) }
-            }
-            .addOnCanceledListener {
-                navigateBack()
-            }
-            .addOnFailureListener { e ->
-                e.localizedMessage?.let { Log.d("SendMoney: Barcode scan failed", it) }
-            }
+        IconButton(
+            onClick = { isFlashOn = !isFlashOn },
+            content = {
+                Icon(
+                    imageVector = if(isFlashOn) MifosIcons.FlashOn
+                    else MifosIcons.FlashOff,
+                    contentDescription = null
+                )
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 20.dp)
+        )
     }
 }
-
 
 @Preview(showSystemUi = true)
 @Composable

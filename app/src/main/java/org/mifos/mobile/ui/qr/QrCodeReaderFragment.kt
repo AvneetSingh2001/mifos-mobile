@@ -1,20 +1,16 @@
 package org.mifos.mobile.ui.qr
 
-import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
-import com.google.zxing.Result
 import dagger.hilt.android.AndroidEntryPoint
-import me.dm7.barcodescanner.zxing.ZXingScannerView
-import me.dm7.barcodescanner.zxing.ZXingScannerView.ResultHandler
 import org.mifos.mobile.R
 import org.mifos.mobile.core.ui.component.mifosComposeView
-import org.mifos.mobile.databinding.FragmentScanQrCodeBinding
 import org.mifos.mobile.models.beneficiary.Beneficiary
 import org.mifos.mobile.ui.activities.base.BaseActivity
 import org.mifos.mobile.ui.enums.BeneficiaryState
