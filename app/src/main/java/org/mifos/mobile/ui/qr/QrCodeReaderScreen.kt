@@ -1,5 +1,7 @@
 package org.mifos.mobile.ui.qr
 
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,7 +30,9 @@ fun QrCodeReaderScreen(
         topBarTitleResId = R.string.add_beneficiary,
         navigateBack = navigateBack,
         scaffoldContent = {
-            Box(modifier = Modifier.padding(it).fillMaxSize()) {
+            Box(modifier = Modifier
+                .padding(it)
+                .fillMaxSize()) {
                 QrCodeReaderContent(
                     qrScanned = qrScanned,
                     navigateBack = navigateBack
@@ -38,6 +42,7 @@ fun QrCodeReaderScreen(
     )
 }
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun QrCodeReaderContent(
     qrScanned: (String) -> Unit,
