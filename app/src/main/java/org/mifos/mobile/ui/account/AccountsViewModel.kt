@@ -12,14 +12,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.mifos.mobile.models.CheckboxStatus
-import org.mifos.mobile.models.accounts.loan.LoanAccount
-import org.mifos.mobile.models.accounts.savings.SavingAccount
-import org.mifos.mobile.models.accounts.share.ShareAccount
-import org.mifos.mobile.repositories.AccountsRepository
-import org.mifos.mobile.repositories.HomeRepository
 import org.mifos.mobile.utils.AccountsFilterUtil
-import org.mifos.mobile.utils.Constants
+import org.mifos.mobile.core.data.repositories.AccountsRepository
+import org.mifos.mobile.core.data.repositories.HomeRepository
+import org.mifos.mobile.core.model.entity.CheckboxStatus
+import org.mifos.mobile.core.model.entity.accounts.loan.LoanAccount
+import org.mifos.mobile.core.model.entity.accounts.savings.SavingAccount
+import org.mifos.mobile.core.model.entity.accounts.share.ShareAccount
 import org.mifos.mobile.utils.StatusUtils
 import java.util.*
 import javax.inject.Inject
@@ -51,17 +50,17 @@ class AccountsViewModel @Inject constructor(
 
     fun refresh(accountType: String?) {
         when (accountType) {
-            Constants.SAVINGS_ACCOUNTS -> {
+            org.mifos.mobile.core.common.Constants.SAVINGS_ACCOUNTS -> {
                 _isRefreshing.value = true
-                loadAccounts(Constants.SAVINGS_ACCOUNTS)
+                loadAccounts(org.mifos.mobile.core.common.Constants.SAVINGS_ACCOUNTS)
             }
-            Constants.LOAN_ACCOUNTS -> {
+            org.mifos.mobile.core.common.Constants.LOAN_ACCOUNTS -> {
                 _isRefreshing.value = true
-                loadAccounts(Constants.LOAN_ACCOUNTS)
+                loadAccounts(org.mifos.mobile.core.common.Constants.LOAN_ACCOUNTS)
             }
-            Constants.SHARE_ACCOUNTS -> {
+            org.mifos.mobile.core.common.Constants.SHARE_ACCOUNTS -> {
                 _isRefreshing.value = true
-                loadAccounts(Constants.SHARE_ACCOUNTS)
+                loadAccounts(org.mifos.mobile.core.common.Constants.SHARE_ACCOUNTS)
             }
         }
     }
@@ -191,11 +190,11 @@ class AccountsViewModel @Inject constructor(
                 _accountsUiState.value = AccountsUiState.Error
             }.collect { clientAccounts ->
                 when (accountType) {
-                    Constants.SAVINGS_ACCOUNTS -> _accountsUiState.value =
+                    org.mifos.mobile.core.common.Constants.SAVINGS_ACCOUNTS -> _accountsUiState.value =
                         AccountsUiState.ShowSavingsAccounts(clientAccounts.savingsAccounts)
-                    Constants.LOAN_ACCOUNTS -> _accountsUiState.value =
+                    org.mifos.mobile.core.common.Constants.LOAN_ACCOUNTS -> _accountsUiState.value =
                         AccountsUiState.ShowLoanAccounts(clientAccounts.loanAccounts)
-                    Constants.SHARE_ACCOUNTS -> _accountsUiState.value =
+                    org.mifos.mobile.core.common.Constants.SHARE_ACCOUNTS -> _accountsUiState.value =
                         AccountsUiState.ShowShareAccounts(clientAccounts.shareAccounts)
                 }
                 _isRefreshing.emit(false)
