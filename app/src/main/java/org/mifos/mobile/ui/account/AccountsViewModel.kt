@@ -12,6 +12,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.mifos.mobile.R
+import org.mifos.mobile.models.CheckboxStatus
+import org.mifos.mobile.models.accounts.loan.LoanAccount
+import org.mifos.mobile.models.accounts.savings.SavingAccount
+import org.mifos.mobile.models.accounts.share.ShareAccount
+import org.mifos.mobile.repositories.AccountsRepository
+import org.mifos.mobile.repositories.HomeRepository
 import org.mifos.mobile.utils.AccountsFilterUtil
 import org.mifos.mobile.core.data.repositories.AccountsRepository
 import org.mifos.mobile.core.data.repositories.HomeRepository
@@ -50,17 +57,17 @@ class AccountsViewModel @Inject constructor(
 
     fun refresh(accountType: String?) {
         when (accountType) {
-            org.mifos.mobile.core.common.Constants.SAVINGS_ACCOUNTS -> {
+            Constants.SAVINGS_ACCOUNTS -> {
                 _isRefreshing.value = true
-                loadAccounts(org.mifos.mobile.core.common.Constants.SAVINGS_ACCOUNTS)
+                loadAccounts(Constants.SAVINGS_ACCOUNTS)
             }
-            org.mifos.mobile.core.common.Constants.LOAN_ACCOUNTS -> {
+            Constants.LOAN_ACCOUNTS -> {
                 _isRefreshing.value = true
-                loadAccounts(org.mifos.mobile.core.common.Constants.LOAN_ACCOUNTS)
+                loadAccounts(Constants.LOAN_ACCOUNTS)
             }
-            org.mifos.mobile.core.common.Constants.SHARE_ACCOUNTS -> {
+            Constants.SHARE_ACCOUNTS -> {
                 _isRefreshing.value = true
-                loadAccounts(org.mifos.mobile.core.common.Constants.SHARE_ACCOUNTS)
+                loadAccounts(Constants.SHARE_ACCOUNTS)
             }
         }
     }
@@ -109,7 +116,7 @@ class AccountsViewModel @Inject constructor(
             else {
                 _isFiltered.update { false }
                 _filterList.update { checkBoxList }
-                }
+            }
         }
     }
 
@@ -118,13 +125,23 @@ class AccountsViewModel @Inject constructor(
         filterList: List<CheckboxStatus>,
         context: Context
     ): List<LoanAccount> {
-        val newList : MutableList<LoanAccount> = mutableListOf()
-        for( filter in filterList)
-        {
-            if(filter.isChecked)
-                newList.plus( getFilteredLoanAccount(accountsList,filter,AccountsFilterUtil.getFilterStrings(context = context)))
+        val uniqueAccountsMap: MutableMap<String, LoanAccount> = mutableMapOf()
+
+        for (filter in filterList) {
+            if (filter.isChecked) {
+                val filteredAccounts = getFilteredLoanAccount(accountsList, filter, AccountsFilterUtil.getFilterStrings(context = context))
+                for (account in filteredAccounts) {
+                    val identifier = getUniqueIdentifierForLoanAccount(account)
+                    uniqueAccountsMap[identifier] = account
+                }
+            }
         }
-        return newList
+
+        return uniqueAccountsMap.values.toList()
+    }
+
+    fun getUniqueIdentifierForLoanAccount(account: LoanAccount): String {
+        return account.accountNo ?: account.loanProductId.toString()
     }
 
     fun getFilterSavingsAccountList(
@@ -137,7 +154,7 @@ class AccountsViewModel @Inject constructor(
         for( filter in filterList)
         {
             if( filter.isChecked )
-                newList.plus( getFilteredSavingsAccount(accountsList,filter, AccountsFilterUtil.getFilterStrings(context = context)))
+                newList.addAll( getFilteredSavingsAccount(accountsList,filter, AccountsFilterUtil.getFilterStrings(context = context)))
         }
         return newList
     }
@@ -151,7 +168,7 @@ class AccountsViewModel @Inject constructor(
         for( filter in filterList)
         {
             if(filter.isChecked)
-                newList.plus(getFilteredShareAccount(accountsList,filter, AccountsFilterUtil.getFilterStrings(context = context)))
+                newList.addAll(getFilteredShareAccount(accountsList,filter, AccountsFilterUtil.getFilterStrings(context = context)))
         }
         return newList
     }
@@ -190,11 +207,11 @@ class AccountsViewModel @Inject constructor(
                 _accountsUiState.value = AccountsUiState.Error
             }.collect { clientAccounts ->
                 when (accountType) {
-                    org.mifos.mobile.core.common.Constants.SAVINGS_ACCOUNTS -> _accountsUiState.value =
+                    Constants.SAVINGS_ACCOUNTS -> _accountsUiState.value =
                         AccountsUiState.ShowSavingsAccounts(clientAccounts.savingsAccounts)
-                    org.mifos.mobile.core.common.Constants.LOAN_ACCOUNTS -> _accountsUiState.value =
+                    Constants.LOAN_ACCOUNTS -> _accountsUiState.value =
                         AccountsUiState.ShowLoanAccounts(clientAccounts.loanAccounts)
-                    org.mifos.mobile.core.common.Constants.SHARE_ACCOUNTS -> _accountsUiState.value =
+                    Constants.SHARE_ACCOUNTS -> _accountsUiState.value =
                         AccountsUiState.ShowShareAccounts(clientAccounts.shareAccounts)
                 }
                 _isRefreshing.emit(false)
@@ -381,7 +398,7 @@ class AccountsViewModel @Inject constructor(
         accounts: List<ShareAccount?>?,
         status: CheckboxStatus?,
         accountsFilterUtil: AccountsFilterUtil
-    ): Collection<ShareAccount?>? {
+    ): Collection<ShareAccount> {
         return Observable.fromIterable(accounts)
             .filter(
                 Predicate { (_, _, _, _, _, _, status1) ->
@@ -405,7 +422,7 @@ class AccountsViewModel @Inject constructor(
                     }
                     false
                 },
-            ).toList().blockingGet()
+            ).toList().blockingGet().filterNotNull()
     }
 
 }
