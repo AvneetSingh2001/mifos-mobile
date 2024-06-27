@@ -12,13 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.mifos.mobile.R
-import org.mifos.mobile.models.CheckboxStatus
-import org.mifos.mobile.models.accounts.loan.LoanAccount
-import org.mifos.mobile.models.accounts.savings.SavingAccount
-import org.mifos.mobile.models.accounts.share.ShareAccount
-import org.mifos.mobile.repositories.AccountsRepository
-import org.mifos.mobile.repositories.HomeRepository
+import org.mifos.mobile.core.common.Constants
 import org.mifos.mobile.utils.AccountsFilterUtil
 import org.mifos.mobile.core.data.repositories.AccountsRepository
 import org.mifos.mobile.core.data.repositories.HomeRepository
