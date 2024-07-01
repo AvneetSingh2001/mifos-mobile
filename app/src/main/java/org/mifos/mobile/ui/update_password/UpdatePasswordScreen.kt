@@ -32,6 +32,7 @@ import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.core.common.Network
 import org.mifos.mobile.feature.savings.savings_account_withdraw.UiStatesParameterProvider
 import org.mifos.mobile.utils.RegistrationUiState
+import org.mifos.mobile.feature.registration.utils.RegistrationState
 
 
 @Composable
@@ -49,7 +50,7 @@ fun UpdatePasswordScreen(
 
 @Composable
 fun UpdatePasswordScreen(
-    uiState: RegistrationUiState,
+    uiState: RegistrationState,
     navigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -76,7 +77,7 @@ fun UpdatePasswordScreen(
             )
 
             when (uiState) {
-                is RegistrationUiState.Loading -> {
+                is RegistrationState.Loading -> {
                     MifosProgressIndicator(
                         modifier = Modifier
                             .fillMaxSize()
@@ -84,7 +85,7 @@ fun UpdatePasswordScreen(
                     )
                 }
 
-                is RegistrationUiState.Error -> {
+                is RegistrationState.Error -> {
                     if (updatePasswordButtonClicked) {
                         LaunchedEffect(snackbarHostState) {
                             snackbarHostState.showSnackbar(
@@ -96,9 +97,9 @@ fun UpdatePasswordScreen(
                     }
                 }
 
-                is RegistrationUiState.Initial -> Unit
+                is RegistrationState.Initial -> Unit
 
-                is RegistrationUiState.Success -> {
+                is RegistrationState.Success -> {
                     LaunchedEffect(snackbarHostState) {
                         snackbarHostState.showSnackbar(
                             context.getString(R.string.password_changed_successfully),
@@ -116,7 +117,7 @@ fun UpdatePasswordScreen(
 @Composable
 @Preview(showSystemUi = true, showBackground = true)
 fun UpdatePasswordScreenPreview(
-    @PreviewParameter(UiStatesParameterProvider::class) registrationUiState: RegistrationUiState
+    @PreviewParameter(UiStatesParameterProvider::class) registrationUiState: RegistrationState
 ) {
     MifosMobileTheme {
         UpdatePasswordScreen(navigateBack = {})

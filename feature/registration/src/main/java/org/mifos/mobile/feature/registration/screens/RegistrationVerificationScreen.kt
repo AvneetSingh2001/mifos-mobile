@@ -1,4 +1,4 @@
-package org.mifos.mobile.ui.registration
+package org.mifos.mobile.feature.registration.screens
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -18,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,12 +44,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.mifos.mobile.R
+import org.mifos.mobile.feature.registration.utils.RegistrationState
+import org.mifos.mobile.feature.registration.R
 import org.mifos.mobile.core.ui.component.MFScaffold
 import org.mifos.mobile.core.ui.component.MifosOutlinedTextField
 import org.mifos.mobile.core.ui.component.MifosProgressIndicatorOverlay
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
-import org.mifos.mobile.utils.RegistrationUiState
+import org.mifos.mobile.feature.registration.viewmodel.RegistrationViewModel
+
 
 @Composable
 fun RegistrationVerificationScreen(
@@ -98,7 +101,7 @@ fun RegistrationVerificationScreen(
 
 @Composable
 fun RegistrationVerificationScreen(
-    uiState: RegistrationUiState,
+    uiState: RegistrationState,
     verifyUser: (authenticationToken: String, requestID: String) -> Unit,
     onVerified: () -> Unit,
     navigateBack: () -> Unit
@@ -120,17 +123,17 @@ fun RegistrationVerificationScreen(
 
                 when (uiState) {
 
-                    RegistrationUiState.Initial -> Unit
+                    RegistrationState.Initial -> Unit
 
-                    is RegistrationUiState.Error -> {
+                    is RegistrationState.Error -> {
                         Toast.makeText(context, uiState.exception, Toast.LENGTH_SHORT).show()
                     }
 
-                    RegistrationUiState.Loading -> {
+                    RegistrationState.Loading -> {
                         MifosProgressIndicatorOverlay()
                     }
 
-                    RegistrationUiState.Success -> {
+                    RegistrationState.Success -> {
                         Toast.makeText(
                             context,
                             getString(context, R.string.verified),
@@ -236,8 +239,7 @@ fun RegistrationVerificationContent(verifyUser: (authenticationToken: String, re
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp),
             contentPadding = PaddingValues(12.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isSystemInDarkTheme()) Color(0xFF9bb1e3)
-                else Color(0xFF325ca8)
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             Text(text = stringResource(id = R.string.verify))
@@ -247,20 +249,20 @@ fun RegistrationVerificationContent(verifyUser: (authenticationToken: String, re
 
 
 class RegistrationVerificationScreenPreviewProvider :
-    PreviewParameterProvider<RegistrationUiState> {
-    override val values: Sequence<RegistrationUiState>
+    PreviewParameterProvider<RegistrationState> {
+    override val values: Sequence<RegistrationState>
         get() = sequenceOf(
-            RegistrationUiState.Initial,
-            RegistrationUiState.Loading,
-            RegistrationUiState.Success,
-            RegistrationUiState.Error(R.string.register)
+            RegistrationState.Initial,
+            RegistrationState.Loading,
+            RegistrationState.Success,
+            RegistrationState.Error(R.string.register)
         )
 }
 
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun RegistrationVerificationScreenPreview(
-    @PreviewParameter(RegistrationVerificationScreenPreviewProvider::class) registrationUiState: RegistrationUiState
+    @PreviewParameter(RegistrationVerificationScreenPreviewProvider::class) registrationUiState: RegistrationState
 ) {
     MifosMobileTheme {
         RegistrationVerificationScreen(
