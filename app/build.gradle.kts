@@ -83,7 +83,7 @@ dependencies {
     implementation(projects.feature.guarantor)
     implementation(projects.feature.savings)
     implementation(projects.feature.qr)
-
+    implementation(projects.feature.thirdPartyTransfer)
 
 
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
