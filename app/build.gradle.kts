@@ -83,6 +83,8 @@ dependencies {
     implementation(projects.feature.guarantor)
     implementation(projects.feature.savings)
     implementation(projects.feature.qr)
+    implementation(projects.feature.transferProcess)
+
     implementation(projects.feature.thirdPartyTransfer)
 
 
