@@ -78,13 +78,16 @@ dependencies {
     implementation(projects.ui)
 
     implementation(projects.feature.loan)
+    implementation(projects.feature.login)
     implementation(projects.feature.registration)
     implementation(projects.feature.beneficiary)
     implementation(projects.feature.guarantor)
     implementation(projects.feature.savings)
     implementation(projects.feature.qr)
     implementation(projects.feature.transferProcess)
-
+    implementation(projects.feature.account)
+    implementation(projects.feature.clientCharge)
+    implementation(projects.feature.recentTransaction)
     implementation(projects.feature.thirdPartyTransfer)
 
 
