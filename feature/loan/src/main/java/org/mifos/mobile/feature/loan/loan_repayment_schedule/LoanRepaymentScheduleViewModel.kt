@@ -18,15 +18,22 @@ import javax.inject.Inject
 class LoanRepaymentScheduleViewModel @Inject constructor(private val loanRepositoryImp: LoanRepository) :
     ViewModel() {
 
-    private val _loanUiState = MutableStateFlow<LoanUiState>(LoanUiState.Loading)
     val loanUiState: StateFlow<LoanUiState> get() = _loanUiState
+    private val _loanUiState = MutableStateFlow<LoanUiState>(LoanUiState.Loading)
 
-    fun loanLoanWithAssociations(loanId: Long?) {
+    val loanId: StateFlow<Long?> get() = _loanId
+    private var _loanId: MutableStateFlow<Long?> = MutableStateFlow(null)
+
+    fun setArgs(id: Long?) {
+        _loanId.value = id
+    }
+
+    fun loanLoanWithAssociations() {
         viewModelScope.launch {
             _loanUiState.value = LoanUiState.Loading
             loanRepositoryImp.getLoanWithAssociations(
                 org.mifos.mobile.core.common.Constants.REPAYMENT_SCHEDULE,
-                loanId,
+                loanId.value,
             ).catch {
                 _loanUiState.value =
                     LoanUiState.ShowError(R.string.repayment_schedule)

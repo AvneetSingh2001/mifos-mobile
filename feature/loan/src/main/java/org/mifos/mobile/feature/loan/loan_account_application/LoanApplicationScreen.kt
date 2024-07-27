@@ -29,7 +29,7 @@ import org.mifos.mobile.feature.loan.R
 @Composable
 fun LoanApplicationScreen(
     viewModel: LoanApplicationViewModel = hiltViewModel(),
-    navigateBack: (isSuccess: Boolean) -> Unit,
+    navigateBack: () -> Unit,
     reviewNewLoanApplication: () -> Unit,
     submitUpdateLoanApplication: () -> Unit
 ) {
@@ -56,9 +56,9 @@ fun LoanApplicationScreen(
 @Composable
 fun LoanApplicationScreen(
     uiState: LoanApplicationUiState,
-    loanState: org.mifos.mobile.core.model.enums.LoanState,
+    loanState: LoanState,
     uiData: LoanApplicationScreenData,
-    navigateBack: (isSuccess: Boolean) -> Unit,
+    navigateBack: () -> Unit,
     selectProduct: (Int) -> Unit,
     selectPurpose: (Int) -> Unit,
     setDisbursementDate: (String) -> Unit,
@@ -71,7 +71,7 @@ fun LoanApplicationScreen(
         topBar = {
             MifosTopBar(
                 modifier = Modifier.fillMaxWidth(),
-                navigateBack = { navigateBack(false) },
+                navigateBack = { navigateBack() },
                 title = {
                     Text(text = stringResource(
                         id = if (loanState == LoanState.CREATE) R.string.apply_for_loan

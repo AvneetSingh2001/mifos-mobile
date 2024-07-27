@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import org.mifos.mobile.core.data.repositories.LoanRepository
@@ -15,9 +17,8 @@ import javax.inject.Inject
 class LoanAccountsDetailViewModel @Inject constructor(private val loanRepositoryImp: LoanRepository) :
     ViewModel() {
 
-    private val _loanUiState =
-        mutableStateOf<LoanAccountDetailUiState>(LoanAccountDetailUiState.Loading)
-    val loanUiState: State<LoanAccountDetailUiState> get() = _loanUiState
+    private val _loanUiState = MutableStateFlow<LoanAccountDetailUiState>(LoanAccountDetailUiState.Loading)
+    val loanUiState: StateFlow<LoanAccountDetailUiState> get() = _loanUiState
 
     private var _loanId: Long? = 0
     val loanId: Long? get() = _loanId
@@ -25,7 +26,7 @@ class LoanAccountsDetailViewModel @Inject constructor(private val loanRepository
     private var _loanWithAssociations: LoanWithAssociations? = null
     val loanWithAssociations get() = _loanWithAssociations
 
-    fun loadLoanAccountDetails(loanId: Long?) {
+    fun loadLoanAccountDetails() {
         viewModelScope.launch {
             _loanUiState.value = LoanAccountDetailUiState.Loading
             loanRepositoryImp.getLoanWithAssociations(org.mifos.mobile.core.common.Constants.REPAYMENT_SCHEDULE, loanId)
