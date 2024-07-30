@@ -27,7 +27,7 @@ class GuarantorListViewModel @Inject constructor(
     private val guarantorRepositoryImp: GuarantorRepository
 ) : ViewModel() {
 
-    val loanId = savedStateHandle.getStateFlow<Long>(key = Constants.LOAN_ID, initialValue = -1)
+    val loanId = savedStateHandle.getStateFlow<Long>(key = LOAN_ID, initialValue = -1)
 
     val guarantorUiState = loanId
             .flatMapLatest { loanId ->

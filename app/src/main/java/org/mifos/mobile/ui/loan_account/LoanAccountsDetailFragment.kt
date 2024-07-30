@@ -48,9 +48,7 @@ class LoanAccountsDetailFragment : BaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (arguments != null) {
-            viewModel.setLoanId(arguments?.getLong(Constants.LOAN_ID))
-        }
+
     }
 
     override fun onCreateView(
@@ -62,18 +60,18 @@ class LoanAccountsDetailFragment : BaseFragment() {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MifosMobileTheme {
-                    LoanAccountDetailScreen(
-                        navigateBack = { activity?.finish() },
-                        viewGuarantor = { viewGuarantor() },
-                        updateLoan = { updateLoan() },
-                        withdrawLoan = { withdrawLoan() },
-                        viewLoanSummary = {  onLoanSummaryClicked() },
-                        viewCharges = { chargesClicked() },
-                        viewRepaymentSchedule = { onRepaymentScheduleClicked() },
-                        viewTransactions = { onTransactionsClicked() },
-                        viewQr = {  onQrCodeClicked() },
-                        makePayment = { onMakePaymentClicked() },
-                    )
+//                    LoanAccountDetailScreen(
+//                        navigateBack = { activity?.finish() },
+//                        viewGuarantor = { viewGuarantor() },
+//                        updateLoan = { updateLoan() },
+//                        withdrawLoan = { withdrawLoan() },
+//                        viewLoanSummary = {  onLoanSummaryClicked() },
+//                        viewCharges = { chargesClicked() },
+//                        viewRepaymentSchedule = { onRepaymentScheduleClicked() },
+//                        viewTransactions = { onTransactionsClicked() },
+//                        viewQr = {  onQrCodeClicked() },
+//                        makePayment = { onMakePaymentClicked() },
+//                    )
                 }
             }
         }
@@ -91,7 +89,7 @@ class LoanAccountsDetailFragment : BaseFragment() {
     private fun onMakePaymentClicked() {
         (activity as BaseActivity?)?.replaceFragment(
             SavingsMakeTransferComposeFragment.newInstance(
-                viewModel.loanId,
+                viewModel.loanId.value,
                 viewModel.loanWithAssociations?.summary?.totalOutstanding,
                 Constants.TRANSFER_PAY_TO,
             ),
@@ -119,7 +117,7 @@ class LoanAccountsDetailFragment : BaseFragment() {
     private fun onRepaymentScheduleClicked() {
         (activity as BaseActivity?)?.replaceFragment(
             LoanRepaymentScheduleFragment.newInstance(
-                viewModel.loanId,
+                viewModel.loanId.value,
             ),
             true,
             R.id.container,
@@ -132,7 +130,7 @@ class LoanAccountsDetailFragment : BaseFragment() {
     private fun onTransactionsClicked() {
         (activity as BaseActivity?)?.replaceFragment(
             LoanAccountTransactionFragment.newInstance(
-                viewModel.loanId,
+                viewModel.loanId.value,
             ),
             true,
             R.id.container,
@@ -200,7 +198,7 @@ class LoanAccountsDetailFragment : BaseFragment() {
 
     private fun viewGuarantor() {
         val intent = Intent(requireContext(), GuarantorActivity::class.java)
-        intent.putExtra(Constants.LOAN_ID, viewModel.loanId)
+        intent.putExtra(Constants.LOAN_ID, viewModel.loanId.value)
         startActivity(intent)
     }
 

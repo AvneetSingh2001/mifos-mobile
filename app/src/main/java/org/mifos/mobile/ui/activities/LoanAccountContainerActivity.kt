@@ -1,26 +1,38 @@
 package org.mifos.mobile.ui.activities
 
 import android.os.Bundle
-import org.mifos.mobile.R
-import org.mifos.mobile.databinding.ActivityContainerBinding
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.navigation.compose.rememberNavController
+import org.mifos.mobile.core.common.Constants
+import org.mifos.mobile.core.ui.theme.MifosMobileTheme
+import org.mifos.mobile.feature.guarantor.navigation.GuarantorNavigation
+import org.mifos.mobile.feature.guarantor.navigation.GuarantorRoute
+import org.mifos.mobile.feature.loan.navigation.LoanNavigation
+import org.mifos.mobile.feature.loan.navigation.LoanRoute
+import org.mifos.mobile.navigation.RootNavGraph
 import org.mifos.mobile.ui.activities.base.BaseActivity
-import org.mifos.mobile.ui.loan_account.LoanAccountsDetailFragment
+
 
 /*
 ~This project is licensed under the open source MPL V2.
 ~See https://github.com/openMF/self-service-app/blob/master/LICENSE.md
 */
 class LoanAccountContainerActivity : BaseActivity() {
-
-    private lateinit var binding: ActivityContainerBinding
-
-    private var loanId: Long = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityContainerBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        loanId = intent?.extras?.getLong(org.mifos.mobile.core.common.Constants.LOAN_ID)!!
-        replaceFragment(LoanAccountsDetailFragment.newInstance(loanId), false, R.id.container)
-        showBackButton()
+        val loanId = intent.getLongExtra(Constants.LOAN_ID, -1)
+        enableEdgeToEdge()
+        setContent {
+            MifosMobileTheme {
+                val navController = rememberNavController()
+                RootNavGraph(
+                    startDestination = LoanNavigation.LoanBase.route,
+                    navController = navController,
+                    nestedStartDestination = LoanNavigation.LoanDetail.passArguments(loanId = loanId),
+                    navigateBack = { finish() }
+                )
+            }
+        }
     }
 }

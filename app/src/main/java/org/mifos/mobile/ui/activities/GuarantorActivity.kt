@@ -22,10 +22,9 @@ class GuarantorActivity : ComponentActivity() {
             MifosMobileTheme {
                 val navController = rememberNavController()
                 RootNavGraph(
-                    startDestination = GuarantorRoute.GUARANTOR_NAVIGATION_ROUTE,
+                    startDestination = GuarantorRoute.GUARANTOR_NAVIGATION_ROUTE_BASE,
                     navController = navController,
                     nestedStartDestination = GuarantorNavigation.GuarantorList.route,
-                    loanId = loanId,
                     navigateBack = { finish() }
                 )
             }

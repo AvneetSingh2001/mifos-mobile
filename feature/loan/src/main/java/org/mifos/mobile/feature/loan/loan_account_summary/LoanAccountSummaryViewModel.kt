@@ -6,9 +6,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.mifos.mobile.core.model.entity.accounts.loan.LoanWithAssociations
 import org.mifos.mobile.feature.loan.loan_account.LoanAccountDetailUiState
+import javax.inject.Inject
 
 @HiltViewModel
-class LoanAccountSummaryViewModel: ViewModel() {
+class LoanAccountSummaryViewModel @Inject constructor(): ViewModel() {
 
     private var _loanWithAssociations: MutableStateFlow<LoanWithAssociations?> = MutableStateFlow(null)
     val loanWithAssociations: StateFlow<LoanWithAssociations?> get() = _loanWithAssociations

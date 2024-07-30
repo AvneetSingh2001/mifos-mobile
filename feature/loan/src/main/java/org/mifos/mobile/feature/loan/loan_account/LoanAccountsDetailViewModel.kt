@@ -2,6 +2,7 @@ package org.mifos.mobile.feature.loan.loan_account
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,19 +10,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import org.mifos.mobile.core.common.Constants
+import org.mifos.mobile.core.common.Constants.LOAN_ID
 import org.mifos.mobile.core.data.repositories.LoanRepository
 import org.mifos.mobile.core.model.entity.accounts.loan.LoanWithAssociations
 import javax.inject.Inject
 
 @HiltViewModel
-class LoanAccountsDetailViewModel @Inject constructor(private val loanRepositoryImp: LoanRepository) :
-    ViewModel() {
+class LoanAccountsDetailViewModel @Inject constructor(
+    private val loanRepositoryImp: LoanRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val _loanUiState = MutableStateFlow<LoanAccountDetailUiState>(LoanAccountDetailUiState.Loading)
     val loanUiState: StateFlow<LoanAccountDetailUiState> get() = _loanUiState
 
-    private var _loanId: Long? = 0
-    val loanId: Long? get() = _loanId
+    val loanId = savedStateHandle.getStateFlow<Long>(key = LOAN_ID, initialValue = -1)
 
     private var _loanWithAssociations: LoanWithAssociations? = null
     val loanWithAssociations get() = _loanWithAssociations
@@ -29,7 +33,7 @@ class LoanAccountsDetailViewModel @Inject constructor(private val loanRepository
     fun loadLoanAccountDetails() {
         viewModelScope.launch {
             _loanUiState.value = LoanAccountDetailUiState.Loading
-            loanRepositoryImp.getLoanWithAssociations(org.mifos.mobile.core.common.Constants.REPAYMENT_SCHEDULE, loanId)
+            loanRepositoryImp.getLoanWithAssociations(Constants.REPAYMENT_SCHEDULE, loanId.value)
                 ?.catch { _loanUiState.value = LoanAccountDetailUiState.Error }
                 ?.collect { processLoanDetailsResponse(it) }
         }
@@ -45,10 +49,6 @@ class LoanAccountsDetailViewModel @Inject constructor(private val loanRepository
             else -> LoanAccountDetailUiState.Success(loanWithAssociations)
         }
         _loanUiState.value = uiState
-    }
-
-    fun setLoanId(id: Long?) {
-        _loanId = id
     }
 }
 

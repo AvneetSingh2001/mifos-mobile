@@ -24,7 +24,7 @@ import org.mifos.mobile.feature.loan.R
 fun LoanAccountDetailScreen(
     viewModel: LoanAccountsDetailViewModel = hiltViewModel(),
     navigateBack: () -> Unit,
-    viewGuarantor: () -> Unit,
+    viewGuarantor: (loanId: Long) -> Unit,
     updateLoan: () -> Unit,
     withdrawLoan: () -> Unit,
     viewLoanSummary: () -> Unit,
@@ -35,6 +35,7 @@ fun LoanAccountDetailScreen(
     makePayment: () -> Unit
 ) {
     val uiState by viewModel.loanUiState.collectAsStateWithLifecycle()
+    val loanId by viewModel.loanId.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = Unit) {
         viewModel.loadLoanAccountDetails()
@@ -43,7 +44,7 @@ fun LoanAccountDetailScreen(
     LoanAccountDetailScreen(
         uiState = uiState,
         navigateBack = navigateBack,
-        viewGuarantor = viewGuarantor,
+        viewGuarantor = { viewGuarantor(loanId) },
         updateLoan = updateLoan,
         withdrawLoan = withdrawLoan,
         retryConnection = { viewModel.loadLoanAccountDetails() },
