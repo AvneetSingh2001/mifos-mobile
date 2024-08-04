@@ -51,24 +51,24 @@ class SavingAccountsDetailFragment : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        viewModel.loadSavingsWithAssociations(viewModel.savingsId)
+        viewModel.loadSavingsWithAssociations()
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MifosMobileTheme {
-                    SavingsAccountDetailScreen(
-                        uiState = viewModel.savingAccountsDetailUiState.value,
-                        navigateBack = { activity?.finish() },
-                        updateSavingsAccount = { updateSavingsAccount(it) },
-                        withdrawSavingsAccount = { withdrawSavingsAccount(it) },
-                        makeTransfer = { transfer(it) },
-                        viewTransaction = { transactionsClicked() },
-                        viewCharges = { chargeClicked() },
-                        viewQrCode = { qrCodeClicked(it) },
-                        callUs = { dialHelpLineNumber() },
-                        deposit = { deposit(it) },
-                        retryConnection = { onRetry() }
-                    )
+//                    SavingsAccountDetailScreen(
+//                        uiState = viewModel.savingAccountsDetailUiState,
+//                        navigateBack = { activity?.finish() },
+//                        updateSavingsAccount = { updateSavingsAccount(it) },
+//                        withdrawSavingsAccount = { withdrawSavingsAccount(it) },
+//                        makeTransfer = { transfer(it) },
+//                        viewTransaction = { transactionsClicked() },
+//                        viewCharges = { chargeClicked() },
+//                        viewQrCode = { qrCodeClicked(it) },
+//                        callUs = { dialHelpLineNumber() },
+//                        deposit = { deposit(it) },
+//                        retryConnection = { onRetry() }
+//                    )
                 }
             }
         }
@@ -142,7 +142,7 @@ class SavingAccountsDetailFragment : BaseFragment() {
                 Toast.LENGTH_SHORT,
             ).show()
         } else {
-            viewModel.loadSavingsWithAssociations(viewModel.savingsId)
+            viewModel.loadSavingsWithAssociations()
         }
     }
 

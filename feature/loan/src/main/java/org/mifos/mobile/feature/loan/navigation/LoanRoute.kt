@@ -9,5 +9,4 @@ object LoanRoute {
     const val LOAN_WITHDRAW_SCREEN_ROUTE = "loan_withdraw_screen_route"
     const val LOAN_SCHEDULE_SCREEN_ROUTE = "loan_schedule_screen_route"
     const val LOAN_REVIEW_SCREEN_ROUTE = "loan_review_screen_route"
-
 }

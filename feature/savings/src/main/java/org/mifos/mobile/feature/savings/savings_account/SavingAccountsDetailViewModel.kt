@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import org.mifos.mobile.core.ui.theme.Blue
@@ -22,9 +24,8 @@ import javax.inject.Inject
 class SavingAccountsDetailViewModel @Inject constructor(private val savingsAccountRepositoryImp: SavingsAccountRepository) :
     ViewModel() {
 
-    private val _savingAccountsDetailUiState =
-        mutableStateOf<SavingsAccountDetailUiState>(SavingsAccountDetailUiState.Loading)
-    val savingAccountsDetailUiState: State<SavingsAccountDetailUiState>
+    private val _savingAccountsDetailUiState = MutableStateFlow<SavingsAccountDetailUiState>(SavingsAccountDetailUiState.Loading)
+    val savingAccountsDetailUiState: StateFlow<SavingsAccountDetailUiState>
         get() = _savingAccountsDetailUiState
 
     private var _savingsId: Long? = 0
@@ -37,11 +38,11 @@ class SavingAccountsDetailViewModel @Inject constructor(private val savingsAccou
      *
      * @param accountId Id of Savings Account
      */
-    fun loadSavingsWithAssociations(accountId: Long?) {
+    fun loadSavingsWithAssociations() {
         viewModelScope.launch {
             _savingAccountsDetailUiState.value = SavingsAccountDetailUiState.Loading
             savingsAccountRepositoryImp.getSavingsWithAssociations(
-                accountId, org.mifos.mobile.core.common.Constants.TRANSACTIONS,
+                savingsId, org.mifos.mobile.core.common.Constants.TRANSACTIONS,
             ).catch {
                 _savingAccountsDetailUiState.value = SavingsAccountDetailUiState.Error
             }.collect {
