@@ -3,6 +3,8 @@ package org.mifos.mobile.navigation
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -15,6 +17,8 @@ import org.mifos.mobile.feature.about.navigation.navigateToAboutUsScreen
 import org.mifos.mobile.feature.auth.navigation.authenticationNavGraph
 import org.mifos.mobile.feature.client_charge.navigation.clientChargeNavGraph
 import org.mifos.mobile.feature.client_charge.navigation.navigateToClientChargeScreen
+import org.mifos.mobile.feature.beneficiary.navigation.BeneficiaryNavigation
+import org.mifos.mobile.feature.beneficiary.navigation.beneficiaryNavGraph
 import org.mifos.mobile.feature.guarantor.navigation.guarantorNavGraph
 import org.mifos.mobile.feature.guarantor.navigation.navigateToGuarantorList
 import org.mifos.mobile.feature.help.navigation.helpNavGraph
@@ -37,9 +41,12 @@ import org.mifos.mobile.feature.update_password.navigation.navigateToUpdatePassw
 import org.mifos.mobile.feature.update_password.navigation.updatePasswordNavGraph
 import org.mifos.mobile.feature.user_profile.navigation.navigateToUserProfile
 import org.mifos.mobile.feature.user_profile.navigation.userProfileNavGraph
+import org.mifos.mobile.feature.qr.navigation.QrNavigation
+import org.mifos.mobile.feature.qr.navigation.qrNavGraph
 import org.mifos.mobile.ui.activities.PassCodeActivity
 import org.mifos.mobile.ui.activities.PrivacyPolicyActivity
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun RootNavGraph(
     navController: NavHostController,
@@ -129,6 +136,37 @@ fun RootNavGraph(
 
         transferProcessNavGraph (
             navigateBack = navController::popBackStack
+        )
+
+        beneficiaryNavGraph(
+            navController = navController,
+            navigateBack =  { navController.popBackStack() },
+            startDestination = nestedStartDestination,
+            openQrImportScreen = {
+                navController.navigate(
+                    QrNavigation.Import.route
+                )
+            },
+            openQrReaderScreen = {
+                navController.navigate(
+                    QrNavigation.Reader.route
+                )
+            }
+        )
+
+        qrNavGraph(
+            navController = navController,
+            navigateBack = { navController.popBackStack() },
+            startDestination = nestedStartDestination,
+            qrData = null,
+            openBeneficiaryApplication = {
+                beneficiary, beneficiaryState ->
+                navController.navigate(
+                BeneficiaryNavigation.BeneficiaryApplication(
+                        beneficiaryState, beneficiary
+                    ).route
+                )
+            }
         )
     }
 }
