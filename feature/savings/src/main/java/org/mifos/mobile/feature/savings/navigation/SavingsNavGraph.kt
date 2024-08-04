@@ -19,6 +19,15 @@ fun NavGraphBuilder.savingsNavGraph(
         route = SavingsNavigation.SavingsBase.route,
     ) {
         savingsDetailRoute(
+            callUs = {},
+            deposit = {},
+            makeTransfer = {},
+            navigateBack = {},
+            updateSavingsAccount = {},
+            viewCharges = {},
+            viewQrCode = {},
+            viewTransaction = {},
+            withdrawSavingsAccount = {}
         )
 
         savingsApplication(
@@ -75,7 +84,7 @@ fun NavGraphBuilder.savingsApplication(
     ) {
         SavingsAccountApplicationScreen(
             navigateBack = navigateBack,
-            submit = { /* Implement submit logic here */ },
+            submit = { _, _, _ -> },
             retryConnection = { /* Implement retry logic here */ }
         )
     }
@@ -89,8 +98,6 @@ fun NavGraphBuilder.savingsTransaction(
     ) {
         SavingsAccountTransactionScreen(
             navigateBack = navigateBack,
-            retryConnection = { /* Implement retry logic here */ },
-            filterList = { /* Implement filter list logic here */ }
         )
     }
 }

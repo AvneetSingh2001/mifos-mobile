@@ -3,8 +3,6 @@ package org.mifos.mobile.navigation
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -14,6 +12,7 @@ import org.mifos.mobile.core.common.Constants.INTIAL_LOGIN
 import org.mifos.mobile.core.model.enums.ChargeType
 import org.mifos.mobile.feature.about.navigation.aboutUsNavGraph
 import org.mifos.mobile.feature.about.navigation.navigateToAboutUsScreen
+import org.mifos.mobile.feature.account.navigation.clientAccountsNavGraph
 import org.mifos.mobile.feature.auth.navigation.authenticationNavGraph
 import org.mifos.mobile.feature.client_charge.navigation.clientChargeNavGraph
 import org.mifos.mobile.feature.client_charge.navigation.navigateToClientChargeScreen
@@ -43,10 +42,10 @@ import org.mifos.mobile.feature.user_profile.navigation.navigateToUserProfile
 import org.mifos.mobile.feature.user_profile.navigation.userProfileNavGraph
 import org.mifos.mobile.feature.qr.navigation.QrNavigation
 import org.mifos.mobile.feature.qr.navigation.qrNavGraph
+import org.mifos.mobile.feature.savings.navigation.savingsNavGraph
 import org.mifos.mobile.ui.activities.PassCodeActivity
 import org.mifos.mobile.ui.activities.PrivacyPolicyActivity
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun RootNavGraph(
     navController: NavHostController,
@@ -167,6 +166,17 @@ fun RootNavGraph(
                     ).route
                 )
             }
+        )
+
+        savingsNavGraph(
+            startDestination = nestedStartDestination,
+            navigateBack = { navController.popBackStack() }
+        )
+
+        clientAccountsNavGraph(
+            navigateBack = navigateBack,
+            navigateToNextActivity = {},
+            navigateToAccountDetail = { _, _ ->}
         )
     }
 }

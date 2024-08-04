@@ -19,6 +19,7 @@ import org.mifos.mobile.core.model.entity.CheckboxStatus
 import org.mifos.mobile.core.model.entity.accounts.loan.LoanAccount
 import org.mifos.mobile.core.model.entity.accounts.savings.SavingAccount
 import org.mifos.mobile.core.model.entity.accounts.share.ShareAccount
+import org.mifos.mobile.core.model.enums.AccountType
 import org.mifos.mobile.feature.account.utils.AccountState
 import org.mifos.mobile.feature.account.utils.StatusUtils
 import java.util.*
@@ -48,6 +49,7 @@ class AccountsViewModel @Inject constructor(
     private val _filterList = MutableStateFlow(emptyList<CheckboxStatus>())
     val filterList: StateFlow<List<CheckboxStatus>> = _filterList.asStateFlow()
 
+    val accountType = MutableStateFlow(AccountType.SAVINGS)
 
     fun refresh(accountType: String?) {
         when (accountType) {

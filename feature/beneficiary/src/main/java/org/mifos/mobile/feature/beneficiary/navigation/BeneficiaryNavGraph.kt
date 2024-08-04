@@ -15,7 +15,6 @@ import org.mifos.mobile.feature.beneficiary.navigation.BeneficiaryRoute.BENEFICI
 import org.mifos.mobile.feature.beneficiary.navigation.BeneficiaryRoute.BENEFICIARY_NAVIGATION_ROUTE
 import org.mifos.mobile.feature.beneficiary.presentation.BeneficiaryScreen
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun NavGraphBuilder.beneficiaryNavGraph(
     startDestination: String,
     navController: NavHostController,
@@ -89,7 +88,6 @@ fun NavGraphBuilder.beneficiaryListRoute(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun NavGraphBuilder.addBeneficiaryRoute(
     navigateBack: () -> Unit,
     addBeneficiaryManually: () -> Unit,

@@ -8,6 +8,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import org.mifos.mobile.core.ui.component.MifosTabPager
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.feature.account.account.screens.AccountsScreen
 import org.mifos.mobile.core.model.entity.CheckboxStatus
+import org.mifos.mobile.core.model.enums.AccountType
 import org.mifos.mobile.feature.account.client_account.utils.ClientAccountFilterDialog
 import org.mifos.mobile.feature.account.client_account.utils.ClientAccountsScreenTopBar
 import org.mifos.mobile.feature.account.viewmodel.AccountsViewModel
@@ -43,14 +45,15 @@ fun ClientAccountsScreen(
 ) {
     val context = LocalContext.current
     var isDialogActive by rememberSaveable { mutableStateOf(false) }
-    var currentPage by rememberSaveable { mutableIntStateOf(0) }
+    val accountType by viewModel.accountType.collectAsStateWithLifecycle()
+    var currentPage by rememberSaveable { mutableIntStateOf(accountType.ordinal) }
     val filterList by viewModel.filterList.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = currentPage) {
         viewModel.setFilterList(
             checkBoxList = emptyList(),
             currentPage = currentPage,
-            context = context
+            context = context,
         )
     }
 
@@ -77,7 +80,7 @@ fun ClientAccountsScreen(
         currentPage = currentPage,
         pageChanged = { index -> currentPage = index },
         isDialogActive = isDialogActive,
-        filterList = filterList
+        filterList = filterList,
     )
 }
 
@@ -95,8 +98,7 @@ fun ClientAccountsScreen(
     currentPage: Int,
     pageChanged: (index: Int) -> Unit,
     isDialogActive: Boolean,
-    filterList: List<CheckboxStatus>
-
+    filterList: List<CheckboxStatus>,
 ) {
     val tabs = listOf(
         stringResource(id = R.string.savings_account),
@@ -151,6 +153,7 @@ fun ClientAccountsScreen(
                         accountId
                     )
                 },
+                currentPage = currentPage
             )
         }
     )
@@ -163,10 +166,10 @@ fun ClientAccountsScreen(
 fun ClientAccountsTabRow(
     modifier: Modifier,
     pageChanged: (index: Int) -> Unit,
-    onItemClick: (accountType: String, accountId: Long) -> Unit
+    onItemClick: (accountType: String, accountId: Long) -> Unit,
+    currentPage: Int
 ) {
-
-    var currentPage by remember { mutableIntStateOf(0) }
+    var currentPage by remember { mutableIntStateOf(currentPage) }
     val pagerState = rememberPagerState(pageCount = { 3 })
     val tabs = listOf(
         stringResource(id = R.string.savings),
