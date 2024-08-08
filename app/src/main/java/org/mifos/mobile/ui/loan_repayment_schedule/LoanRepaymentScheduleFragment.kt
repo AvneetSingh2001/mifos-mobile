@@ -24,7 +24,6 @@ class LoanRepaymentScheduleFragment : BaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (arguments != null) viewModel.setArgs(id = arguments?.getLong(Constants.LOAN_ID))
     }
 
     override fun onCreateView(

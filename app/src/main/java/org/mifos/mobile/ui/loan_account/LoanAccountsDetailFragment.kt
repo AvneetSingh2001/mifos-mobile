@@ -17,7 +17,6 @@ import org.mifos.mobile.core.model.enums.ChargeType
 import org.mifos.mobile.core.model.enums.LoanState
 import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.ui.activities.GuarantorActivity
-import org.mifos.mobile.feature.loan.loan_account.LoanAccountDetailScreen
 import org.mifos.mobile.feature.loan.loan_account.LoanAccountsDetailViewModel
 import org.mifos.mobile.feature.qr.utils.QrCodeGenerator
 import org.mifos.mobile.ui.activities.base.BaseActivity

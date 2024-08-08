@@ -14,8 +14,8 @@ fun NavGraphBuilder.recentTransactionNavGraph(
     navigateBack: () -> Unit,
 ) {
     navigation(
-        startDestination = RecentTransactionNavigation.RecentTransactionBase.route,
-        route = RecentTransactionNavigation.RecentTransactionScreen.route,
+        startDestination = RecentTransactionNavigation.RecentTransactionScreen.route,
+        route = RecentTransactionNavigation.RecentTransactionBase.route,
     ) {
         settingsScreenRoute(
             navigateBack = navigateBack,

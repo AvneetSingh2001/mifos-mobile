@@ -26,8 +26,8 @@ import org.mifos.mobile.feature.home.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    callHelpline: (String) -> Unit,
-    mailHelpline: (String) -> Unit,
+    callHelpline: () -> Unit,
+    mailHelpline: () -> Unit,
     onNavigate: (HomeDestinations) -> Unit
 ) {
     val homeUiState by viewModel.homeUiState.collectAsStateWithLifecycle()
@@ -49,8 +49,7 @@ fun HomeScreen(
         mailHelpline = mailHelpline,
         homeCards = viewModel.getHomeCardItems(),
         openNotifications = { onNavigate(HomeDestinations.NOTIFICATIONS) },
-        navigationItems = { onNavigate(it.toDestination()) },
-        homeCardClicked = { onNavigate(it.toDestination()) }
+        onNavigate = onNavigate
     )
 }
 
@@ -61,12 +60,11 @@ fun HomeScreen(
     userProfile: () -> Unit,
     totalSavings: () -> Unit,
     totalLoan: () -> Unit,
-    callHelpline: (String) -> Unit,
-    mailHelpline: (String) -> Unit,
-    homeCardClicked: (HomeCardItem) -> Unit,
+    callHelpline: () -> Unit,
+    mailHelpline: () -> Unit,
+    onNavigate: (HomeDestinations) -> Unit,
     homeCards: List<HomeCardItem>,
     openNotifications: () -> Unit,
-    navigationItems: (HomeNavigationItems) -> Unit
 ) {
     when (homeUiState) {
         is HomeUiState.Success -> {
@@ -82,9 +80,8 @@ fun HomeScreen(
                 totalLoan = totalLoan,
                 callHelpline = callHelpline,
                 mailHelpline = mailHelpline,
-                homeCardClicked = homeCardClicked,
                 openNotifications = openNotifications,
-                navigateItem = navigationItems
+                onNavigate = onNavigate
             )
         }
 
@@ -116,11 +113,10 @@ fun HomeScreenPreview() {
             totalSavings = {},
             totalLoan = {},
             userProfile = {},
-            homeCardClicked = {},
+            onNavigate = {},
             homeCards = listOf(),
             notificationCount = 0,
             openNotifications = {},
-            navigationItems = {}
         )
     }
 }

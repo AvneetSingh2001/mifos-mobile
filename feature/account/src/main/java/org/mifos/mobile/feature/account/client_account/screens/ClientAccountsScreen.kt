@@ -1,5 +1,6 @@
 package org.mifos.mobile.feature.account.client_account.screens
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
@@ -40,14 +41,19 @@ import org.mifos.mobile.feature.account.viewmodel.AccountsViewModel
 fun ClientAccountsScreen(
     viewModel: AccountsViewModel = hiltViewModel(),
     navigateBack: () -> Unit?,
-    openNextActivity: (currentPage: Int) -> Unit,
-    onItemClick: (accountType: String, accountId: Long) -> Unit
+    navigateToLoanApplicationScreen: () -> Unit,
+    navigateToSavingsApplicationScreen: () -> Unit,
+    onItemClick: (accountType: AccountType, accountId: Long) -> Unit
 ) {
     val context = LocalContext.current
     var isDialogActive by rememberSaveable { mutableStateOf(false) }
     val accountType by viewModel.accountType.collectAsStateWithLifecycle()
-    var currentPage by rememberSaveable { mutableIntStateOf(accountType.ordinal) }
+    var currentPage by rememberSaveable { mutableIntStateOf(0) }
     val filterList by viewModel.filterList.collectAsStateWithLifecycle()
+
+    LaunchedEffect(key1 = accountType) {
+        currentPage = accountType?.ordinal ?: 0
+    }
 
     LaunchedEffect(key1 = currentPage) {
         viewModel.setFilterList(
@@ -59,7 +65,8 @@ fun ClientAccountsScreen(
 
     ClientAccountsScreen(
         navigateBack = navigateBack,
-        openNextActivity = { index -> openNextActivity.invoke(index) },
+        navigateToLoanApplicationScreen = navigateToLoanApplicationScreen,
+        navigateToSavingsApplicationScreen = navigateToSavingsApplicationScreen,
         onItemClick = { accountType, accountId -> onItemClick.invoke(accountType, accountId) },
         cancelFilterDialog = { isDialogActive = false },
         clearFilter = {
@@ -87,8 +94,9 @@ fun ClientAccountsScreen(
 @Composable
 fun ClientAccountsScreen(
     navigateBack: () -> Unit?,
-    openNextActivity: (currentPage: Int) -> Unit,
-    onItemClick: (accountType: String, accountId: Long) -> Unit,
+    navigateToLoanApplicationScreen: () -> Unit,
+    navigateToSavingsApplicationScreen: () -> Unit,
+    onItemClick: (accountType: AccountType, accountId: Long) -> Unit,
     cancelFilterDialog: () -> Unit,
     clearFilter: () -> Unit,
     filterAccounts: (checkBoxList: List<CheckboxStatus>) -> Unit,
@@ -129,8 +137,8 @@ fun ClientAccountsScreen(
         floatingActionButtonContent = FloatingActionButtonContent(
             onClick = {
                 when (currentPage) {
-                    0 -> openNextActivity(currentPage)
-                    1 -> openNextActivity(currentPage)
+                    0 -> navigateToSavingsApplicationScreen()
+                    1 -> navigateToLoanApplicationScreen()
                 }
             },
             contentColor = MaterialTheme.colorScheme.primary,
@@ -166,7 +174,7 @@ fun ClientAccountsScreen(
 fun ClientAccountsTabRow(
     modifier: Modifier,
     pageChanged: (index: Int) -> Unit,
-    onItemClick: (accountType: String, accountId: Long) -> Unit,
+    onItemClick: (accountType: AccountType, accountId: Long) -> Unit,
     currentPage: Int
 ) {
     var currentPage by remember { mutableIntStateOf(currentPage) }
@@ -202,7 +210,7 @@ fun ClientAccountsTabRow(
                 accountType = Constants.SAVINGS_ACCOUNTS,
                 onItemClick = { accType, accountId ->
                     onItemClick.invoke(
-                        accType,
+                        AccountType.SAVINGS,
                         accountId
                     )
                 }
@@ -212,7 +220,7 @@ fun ClientAccountsTabRow(
                 accountType = Constants.LOAN_ACCOUNTS,
                 onItemClick = { accType, accountId ->
                     onItemClick.invoke(
-                        accType,
+                        AccountType.LOAN,
                         accountId
                     )
                 }
@@ -222,7 +230,7 @@ fun ClientAccountsTabRow(
                 accountType = Constants.SHARE_ACCOUNTS,
                 onItemClick = { accType, accountId ->
                     onItemClick.invoke(
-                        accType,
+                        AccountType.SHARE,
                         accountId
                     )
                 }
@@ -238,7 +246,6 @@ fun ClientAccountsScreenPreview() {
     MifosMobileTheme {
         ClientAccountsScreen(
             navigateBack = {},
-            openNextActivity = { it -> },
             onItemClick = { accountType, accountId -> },
             cancelFilterDialog = { },
             clearFilter = { },
@@ -249,7 +256,9 @@ fun ClientAccountsScreenPreview() {
             currentPage = 0,
             pageChanged = { index -> },
             isDialogActive = false,
-            filterList = listOf()
+            filterList = listOf(),
+            navigateToLoanApplicationScreen = {},
+            navigateToSavingsApplicationScreen = {}
         )
     }
 }

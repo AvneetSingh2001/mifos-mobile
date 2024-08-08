@@ -1,7 +1,5 @@
 package org.mifos.mobile.feature.loan.loan_account
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,19 +11,23 @@ import kotlinx.coroutines.launch
 import org.mifos.mobile.core.common.Constants
 import org.mifos.mobile.core.common.Constants.LOAN_ID
 import org.mifos.mobile.core.data.repositories.LoanRepository
+import org.mifos.mobile.core.datastore.PreferencesHelper
 import org.mifos.mobile.core.model.entity.accounts.loan.LoanWithAssociations
+import org.mifos.mobile.core.model.enums.AccountType
+import org.mifos.mobile.feature.qr.utils.QrCodeGenerator
 import javax.inject.Inject
 
 @HiltViewModel
 class LoanAccountsDetailViewModel @Inject constructor(
     private val loanRepositoryImp: LoanRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val preferencesHelper: PreferencesHelper
 ) : ViewModel() {
 
     private val _loanUiState = MutableStateFlow<LoanAccountDetailUiState>(LoanAccountDetailUiState.Loading)
     val loanUiState: StateFlow<LoanAccountDetailUiState> get() = _loanUiState
 
-    val loanId = savedStateHandle.getStateFlow<Long>(key = LOAN_ID, initialValue = -1)
+    val loanId = savedStateHandle.getStateFlow<Long>(key = LOAN_ID, initialValue = -1L)
 
     private var _loanWithAssociations: LoanWithAssociations? = null
     val loanWithAssociations get() = _loanWithAssociations
@@ -34,8 +36,8 @@ class LoanAccountsDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _loanUiState.value = LoanAccountDetailUiState.Loading
             loanRepositoryImp.getLoanWithAssociations(Constants.REPAYMENT_SCHEDULE, loanId.value)
-                ?.catch { _loanUiState.value = LoanAccountDetailUiState.Error }
-                ?.collect { processLoanDetailsResponse(it) }
+                .catch { _loanUiState.value = LoanAccountDetailUiState.Error }
+                .collect { processLoanDetailsResponse(it) }
         }
     }
 
@@ -49,6 +51,14 @@ class LoanAccountsDetailViewModel @Inject constructor(
             else -> LoanAccountDetailUiState.Success(loanWithAssociations)
         }
         _loanUiState.value = uiState
+    }
+
+    fun getQrString(): String {
+        return QrCodeGenerator.getAccountDetailsInString(
+            loanWithAssociations?.accountNo,
+            preferencesHelper.officeName,
+            AccountType.LOAN,
+        )
     }
 }
 

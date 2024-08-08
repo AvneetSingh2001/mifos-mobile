@@ -8,6 +8,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import org.mifos.mobile.core.common.Constants
 import org.mifos.mobile.core.model.enums.ChargeType
+import org.mifos.mobile.core.model.enums.LoanState
 import org.mifos.mobile.feature.loan.loan_account.LoanAccountDetailScreen
 import org.mifos.mobile.feature.loan.loan_account_application.LoanApplicationScreen
 import org.mifos.mobile.feature.loan.loan_account_summary.LoanAccountSummaryScreen
@@ -15,60 +16,64 @@ import org.mifos.mobile.feature.loan.loan_account_transaction.LoanAccountTransac
 import org.mifos.mobile.feature.loan.loan_account_withdraw.LoanAccountWithdrawScreen
 import org.mifos.mobile.feature.loan.loan_repayment_schedule.LoanRepaymentScheduleScreen
 import org.mifos.mobile.feature.loan.loan_review.ReviewLoanApplicationScreen
-import org.mifos.mobile.feature.loan.navigation.LoanRoute.LOAN_NAVIGATION_ROUTE_BASE
 
+
+fun NavController.navigateToLoanDetailScreen(loanId: Long) {
+    navigate(LoanNavigation.LoanDetail.passArguments(loanId = loanId))
+}
+
+fun NavController.navigateToLoanApplication() {
+    navigate(LoanNavigation.LoanApplication.passArguments(loanId = -1L, loanState = LoanState.CREATE))
+}
 
 fun NavGraphBuilder.loanNavGraph(
-    startDestination: String,
     navController: NavController,
     viewGuarantor: (Long) -> Unit,
     viewCharges: (ChargeType) -> Unit,
-    viewQr: () -> Unit,
-    makePayment: () -> Unit,
-    navigateBack: () -> Unit
+    viewQr: (String) -> Unit,
+    makePayment: (accountId: Long, outstandingBalance: Double?, transferType: String) -> Unit,
 ) {
     navigation(
-        startDestination = startDestination,
+        startDestination = LoanNavigation.LoanDetail.route,
         route = LoanNavigation.LoanBase.route,
-        arguments = listOf(navArgument(Constants.LOAN_ID) { type = NavType.LongType; defaultValue = -1L })
     ) {
         loanDetailRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
             viewGuarantor = viewGuarantor,
-            updateLoan = { navController.navigate(LoanNavigation.LoanApplication.route) },
-            withdrawLoan = { navController.navigate(LoanNavigation.LoanWithdraw.route) },
-            viewLoanSummary = { navController.navigate(LoanNavigation.LoanSummary.route) },
+            updateLoan = { navController.navigate(LoanNavigation.LoanApplication.passArguments(it, LoanState.UPDATE)) },
+            withdrawLoan = { navController.navigate(LoanNavigation.LoanWithdraw.passArguments(it)) },
+            viewLoanSummary = { navController.navigate(LoanNavigation.LoanSummary.passArguments(it)) },
             viewCharges = { viewCharges(ChargeType.LOAN) },
-            viewRepaymentSchedule = { navController.navigate(LoanNavigation.LoanSchedule.route) },
-            viewTransactions = { navController.navigate(LoanNavigation.LoanTransaction.route) },
+            viewRepaymentSchedule = { navController.navigate(LoanNavigation.LoanSchedule.passArguments(it)) },
+            viewTransactions = { navController.navigate(LoanNavigation.LoanTransaction.passArguments(it)) },
             viewQr = viewQr,
             makePayment = makePayment
         )
 
         loanApplication(
-            navigateBack = { navController.popBackStack() },
-            reviewNewLoanApplication = { navController.navigate(LoanNavigation.LoanReview.route) },
-            submitUpdateLoanApplication = { navController.navigate(LoanNavigation.LoanReview.route) }
+            navigateBack = navController::popBackStack,
+            reviewNewLoanApplication = { navController.navigate(LoanNavigation.LoanReview.route) }, // give payloads
+            submitUpdateLoanApplication = { navController.navigate(LoanNavigation.LoanReview.route) } // give payloads
         )
 
         loanSummary(
-            navigateBack = { navController.popBackStack() },
+            navigateBack = navController::popBackStack,
         )
 
         loanTransaction(
-            navigateBack = { navController.popBackStack() },
+            navigateBack = navController::popBackStack,
         )
 
         loanWithdraw(
-            navigateBack = { navController.popBackStack() },
+            navigateBack = navController::popBackStack,
         )
 
         loanRepaymentSchedule(
-            navigateBack = { navController.popBackStack() },
+            navigateBack = navController::popBackStack,
         )
 
         loanReview(
-            navigateBack = { navController.popBackStack() },
+            navigateBack = navController::popBackStack,
         )
     }
 }
@@ -76,18 +81,18 @@ fun NavGraphBuilder.loanNavGraph(
 fun NavGraphBuilder.loanDetailRoute(
     navigateBack: () -> Unit,
     viewGuarantor: (Long) -> Unit,
-    updateLoan: () -> Unit,
-    withdrawLoan: () -> Unit,
-    viewLoanSummary: () -> Unit,
+    updateLoan: (Long) -> Unit,
+    withdrawLoan: (Long) -> Unit,
+    viewLoanSummary: (Long) -> Unit,
     viewCharges: () -> Unit,
-    viewRepaymentSchedule: () -> Unit,
-    viewTransactions: () -> Unit,
-    viewQr: () -> Unit,
-    makePayment: () -> Unit
+    viewRepaymentSchedule: (Long) -> Unit,
+    viewTransactions: (Long) -> Unit,
+    viewQr: (String) -> Unit,
+    makePayment: (accountId: Long, outstandingBalance: Double?, transferType: String) -> Unit
 ) {
     composable(
         route = LoanNavigation.LoanDetail.route,
-        arguments = listOf(navArgument(Constants.LOAN_ID) { type = NavType.LongType; defaultValue = -1L })
+        arguments = listOf(navArgument(Constants.LOAN_ID) { type = NavType.LongType })
     ) {
         LoanAccountDetailScreen(
             navigateBack = navigateBack,
@@ -111,6 +116,10 @@ fun NavGraphBuilder.loanApplication(
 ) {
     composable(
         route = LoanNavigation.LoanApplication.route,
+        arguments = listOf(
+            navArgument(Constants.LOAN_ID) { type = NavType.LongType },
+            navArgument(Constants.LOAN_STATE) { type = NavType.EnumType(LoanState::class.java) },
+        )
     ) {
         LoanApplicationScreen(
             navigateBack = navigateBack,
@@ -125,6 +134,7 @@ fun NavGraphBuilder.loanSummary(
 ) {
     composable(
         route = LoanNavigation.LoanSummary.route,
+        arguments = listOf(navArgument(Constants.LOAN_ID) { type = NavType.LongType })
     ) {
         LoanAccountSummaryScreen(
             navigateBack = navigateBack
@@ -137,6 +147,7 @@ fun NavGraphBuilder.loanTransaction(
 ) {
     composable(
         route = LoanNavigation.LoanTransaction.route,
+        arguments = listOf(navArgument(Constants.LOAN_ID) { type = NavType.LongType })
     ) {
         LoanAccountTransactionScreen(
             navigateBack = navigateBack
@@ -148,7 +159,8 @@ fun NavGraphBuilder.loanWithdraw(
     navigateBack: () -> Unit
 ) {
     composable(
-        route = LoanNavigation.LoanWithdraw.route
+        route = LoanNavigation.LoanWithdraw.route,
+        arguments = listOf(navArgument(Constants.LOAN_ID) { type = NavType.LongType })
     ) {
         LoanAccountWithdrawScreen (
             navigateBack = navigateBack
@@ -160,7 +172,8 @@ fun NavGraphBuilder.loanRepaymentSchedule(
     navigateBack: () -> Unit
 ) {
     composable(
-        route = LoanNavigation.LoanSchedule.route
+        route = LoanNavigation.LoanSchedule.route,
+        arguments = listOf(navArgument(Constants.LOAN_ID) { type = NavType.LongType })
     ) {
         LoanRepaymentScheduleScreen(
             navigateBack = navigateBack

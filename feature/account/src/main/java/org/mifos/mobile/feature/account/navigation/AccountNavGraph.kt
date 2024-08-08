@@ -3,45 +3,54 @@ package org.mifos.mobile.feature.account.navigation
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
+import org.mifos.mobile.core.common.Constants
+import org.mifos.mobile.core.model.enums.AccountType
 import org.mifos.mobile.feature.account.client_account.screens.ClientAccountsScreen
 
 
-fun NavController.navigateToClientAccountsScreen() {
-    navigate(ClientAccountsNavigation.ClientAccountsBase.route)
+fun NavController.navigateToClientAccountsScreen(accountType: AccountType = AccountType.SAVINGS) {
+    navigate(ClientAccountsNavigation.ClientAccountsScreen.passArguments(accountType = accountType))
 }
 
 fun NavGraphBuilder.clientAccountsNavGraph(
-    navigateToAccountDetail: (String, Long) -> Unit,
-    navigateToNextActivity: (Int) -> Unit,
-    navigateBack: () -> Unit
+    navController: NavController,
+    navigateToAccountDetail: (AccountType, Long) -> Unit,
+    navigateToLoanApplicationScreen: () -> Unit,
+    navigateToSavingsApplicationScreen: () -> Unit,
 ) {
     navigation(
-        startDestination = ClientAccountsNavigation.ClientAccountsBase.route,
-        route = ClientAccountsNavigation.ClientAccountsScreen.route,
+        startDestination = ClientAccountsNavigation.ClientAccountsScreen.route,
+        route = ClientAccountsNavigation.ClientAccountsBase.route,
     ) {
         clientAccountsScreenRoute(
             navigateToAccountDetail = navigateToAccountDetail,
-            navigateToNextActivity = navigateToNextActivity,
-            navigateBack = navigateBack
+            navigateBack = navController::popBackStack,
+            navigateToLoanApplicationScreen = navigateToLoanApplicationScreen,
+            navigateToSavingsApplicationScreen = navigateToSavingsApplicationScreen
         )
     }
 }
 
 fun NavGraphBuilder.clientAccountsScreenRoute(
-    navigateToAccountDetail: (String, Long) -> Unit,
-    navigateToNextActivity: (Int) -> Unit,
+    navigateToLoanApplicationScreen: () -> Unit,
+    navigateToSavingsApplicationScreen: () -> Unit,
+    navigateToAccountDetail: (AccountType, Long) -> Unit,
     navigateBack: () -> Unit
 ) {
     composable(
         route = ClientAccountsNavigation.ClientAccountsScreen.route,
+        arguments = listOf(
+            navArgument(name = Constants.ACCOUNT_TYPE) { type = NavType.StringType }
+        )
     ) {
-        val context = LocalContext.current
-
         ClientAccountsScreen(
             navigateBack = navigateBack,
-            openNextActivity = { navigateToNextActivity(it) },
+            navigateToLoanApplicationScreen = navigateToLoanApplicationScreen,
+            navigateToSavingsApplicationScreen = navigateToSavingsApplicationScreen,
             onItemClick = { accountType, accountId -> navigateToAccountDetail(accountType, accountId) }
         )
     }

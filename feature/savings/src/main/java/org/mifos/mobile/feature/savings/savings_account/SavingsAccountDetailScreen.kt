@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,35 +21,36 @@ import org.mifos.mobile.core.ui.theme.MifosMobileTheme
 import org.mifos.mobile.core.common.Network
 import org.mifos.mobile.core.model.entity.accounts.savings.SavingsWithAssociations
 import org.mifos.mobile.core.ui.component.MFScaffold
+import org.mifos.mobile.core.ui.component.MifosErrorComponent
+import org.mifos.mobile.core.ui.component.MifosProgressIndicatorOverlay
 import org.mifos.mobile.feature.savings.R
 
 @Composable
 fun SavingsAccountDetailScreen(
     viewModel: SavingAccountsDetailViewModel = hiltViewModel(),
     navigateBack: () -> Unit,
-    updateSavingsAccount: (SavingsWithAssociations?) -> Unit,
-    withdrawSavingsAccount: (SavingsWithAssociations?) -> Unit,
-    makeTransfer: (Boolean) -> Unit,
-    viewTransaction: () -> Unit,
+    updateSavingsAccount: (Long) -> Unit,
+    withdrawSavingsAccount: (Long) -> Unit,
+    makeTransfer: (Long) -> Unit,
+    viewTransaction: (Long) -> Unit,
     viewCharges: () -> Unit,
-    viewQrCode: (SavingsWithAssociations) -> Unit,
+    viewQrCode: (String) -> Unit,
     callUs: () -> Unit,
-    deposit: (Boolean) -> Unit
+    deposit: (Long) -> Unit
 ) {
     val uiState by viewModel.savingAccountsDetailUiState.collectAsStateWithLifecycle()
 
     SavingsAccountDetailScreen(
         uiState = uiState,
         navigateBack = navigateBack,
-        updateSavingsAccount = updateSavingsAccount,
-        withdrawSavingsAccount = withdrawSavingsAccount,
-        makeTransfer = makeTransfer,
-        viewTransaction = viewTransaction,
+        updateSavingsAccount = { updateSavingsAccount(viewModel.savingsId.value ?: -1L) },
+        withdrawSavingsAccount = { withdrawSavingsAccount(viewModel.savingsId.value ?: -1L) },
+        makeTransfer = { makeTransfer(viewModel.savingsId.value ?: -1L) },
+        viewTransaction = { viewTransaction(viewModel.savingsId.value ?: -1L) },
         viewCharges = viewCharges,
-        viewQrCode = viewQrCode,
+        viewQrCode = { viewQrCode(viewModel.getQrString(it)) },
         callUs = callUs,
-        deposit = deposit,
-        retryConnection = { viewModel.loadSavingsWithAssociations() }
+        deposit = { deposit(viewModel.savingsId.value ?: -1L) },
     )
 }
 
@@ -57,41 +59,32 @@ fun SavingsAccountDetailScreen(
 fun SavingsAccountDetailScreen(
     uiState: SavingsAccountDetailUiState,
     navigateBack: () -> Unit,
-    updateSavingsAccount: (SavingsWithAssociations?) -> Unit,
-    withdrawSavingsAccount: (SavingsWithAssociations?) -> Unit,
-    makeTransfer: (Boolean) -> Unit,
+    updateSavingsAccount: () -> Unit,
+    withdrawSavingsAccount: () -> Unit,
+    makeTransfer: () -> Unit,
     viewTransaction: () -> Unit,
     viewCharges: () -> Unit,
     viewQrCode: (SavingsWithAssociations) -> Unit,
     callUs: () -> Unit,
-    deposit: (Boolean) -> Unit,
-    retryConnection: () -> Unit
+    deposit: () -> Unit,
 ) {
     MFScaffold(
         topBar = {
             SavingsAccountDetailTopBar(
                 navigateBack = navigateBack,
-                updateSavingsAccount = {
-                    updateSavingsAccount.invoke(
-                        (uiState as? SavingsAccountDetailUiState.Success)?.savingAccount
-                    )
-                },
-                withdrawSavingsAccount = {
-                    withdrawSavingsAccount.invoke(
-                        (uiState as? SavingsAccountDetailUiState.Success)?.savingAccount
-                    )
-                },
+                updateSavingsAccount = updateSavingsAccount,
+                withdrawSavingsAccount = withdrawSavingsAccount
             )
         }
     ) {
         Box(modifier = Modifier.padding(it)) {
             when (uiState) {
                 is SavingsAccountDetailUiState.Error -> {
-                    ErrorComponent(retryConnection = retryConnection)
+                    MifosErrorComponent()
                 }
 
                 is SavingsAccountDetailUiState.Loading -> {
-                    MifosProgressIndicator(modifier = Modifier.fillMaxSize())
+                    MifosProgressIndicatorOverlay()
                 }
 
                 is SavingsAccountDetailUiState.Success -> {
@@ -118,40 +111,13 @@ fun SavingsAccountDetailScreen(
     }
 }
 
-@Composable
-fun ErrorComponent(
-    retryConnection: () -> Unit
-) {
-    val context = LocalContext.current
-    if (!Network.isConnected(context)) {
-        NoInternet(
-            error = R.string.no_internet_connection,
-            isRetryEnabled = true,
-            retry = retryConnection
-        )
-        Toast.makeText(
-            context, stringResource(R.string.internet_not_connected), Toast.LENGTH_SHORT,
-        ).show()
-    } else {
-        EmptyDataView(
-            error = R.string.error_saving_account_details_loading
-        )
-        Toast.makeText(
-            context,
-            stringResource(id = R.string.error_saving_account_details_loading),
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-}
-
-
 @Preview(showSystemUi = true)
 @Composable
 fun SavingsAccountDetailScreenPreview() {
     MifosMobileTheme {
         SavingsAccountDetailScreen(
             uiState = SavingsAccountDetailUiState.Loading,
-            {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+            {}, {}, {}, {}, {}, {}, {}, {}, {}
         )
     }
 }

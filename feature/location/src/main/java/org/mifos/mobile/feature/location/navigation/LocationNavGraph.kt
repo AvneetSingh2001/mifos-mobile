@@ -7,13 +7,15 @@ import androidx.navigation.compose.navigation
 import org.mifos.mobile.feature.location.LocationsScreen
 
 fun NavController.navigateToLocationsScreen() {
-    navigate(LocationsNavigation.LocationsBase.route)
+    navigate(LocationsNavigation.LocationsScreen.route)
 }
 
-fun NavGraphBuilder.locationsNavGraph() {
+fun NavGraphBuilder.locationsNavGraph(
+    navController: NavController
+) {
     navigation(
-        startDestination = LocationsNavigation.LocationsBase.route,
-        route = LocationsNavigation.LocationsScreen.route,
+        startDestination = LocationsNavigation.LocationsScreen.route,
+        route = LocationsNavigation.LocationsBase.route,
     ) {
         locationsScreenRoute()
     }

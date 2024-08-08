@@ -54,6 +54,9 @@ import org.mifos.mobile.core.ui.component.MifosAlertDialog
 import org.mifos.mobile.feature.home.R
 import org.mifos.mobile.feature.home.components.HomeNavigationDrawer
 import org.mifos.mobile.feature.home.components.HomeTopBar
+import org.mifos.mobile.feature.home.components.TransferDialog
+import org.mifos.mobile.feature.home.navigation.HomeDestinations
+import org.mifos.mobile.feature.home.navigation.toDestination
 import org.mifos.mobile.feature.home.viewmodel.HomeCardItem
 import org.mifos.mobile.feature.home.viewmodel.HomeNavigationItems
 
@@ -68,11 +71,10 @@ fun HomeContent(
     userProfile: () -> Unit,
     totalSavings: () -> Unit,
     totalLoan: () -> Unit,
-    callHelpline: (String) -> Unit,
-    mailHelpline: (String) -> Unit,
-    homeCardClicked: (HomeCardItem) -> Unit,
+    callHelpline: () -> Unit,
+    mailHelpline: () -> Unit,
+    onNavigate: (HomeDestinations) -> Unit,
     openNotifications: () -> Unit,
-    navigateItem: (HomeNavigationItems) -> Unit
 ) {
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -87,7 +89,7 @@ fun HomeContent(
             coroutineScope.launch { drawerState.close() }
             when(it) {
                 HomeNavigationItems.Logout -> showLogoutDialog = true
-                else -> navigateItem(it)
+                else -> onNavigate(it.toDestination())
             }
         },
         content = {
@@ -114,7 +116,7 @@ fun HomeContent(
                     totalLoan = totalLoan,
                     callHelpline = callHelpline,
                     mailHelpline = mailHelpline,
-                    homeCardClicked = homeCardClicked
+                    onNavigate = onNavigate
                 )
             }
         }
@@ -125,7 +127,7 @@ fun HomeContent(
             onDismissRequest = { showLogoutDialog = false },
             dismissText = stringResource(id = R.string.cancel),
             onConfirmation = {
-                navigateItem(HomeNavigationItems.Logout)
+                onNavigate(HomeDestinations.LOGOUT)
                 showLogoutDialog = false
             },
             confirmationText = stringResource(id = R.string.logout),
@@ -146,9 +148,9 @@ private fun HomeContent(
     userProfile: () -> Unit,
     totalSavings: () -> Unit,
     totalLoan: () -> Unit,
-    callHelpline: (String) -> Unit,
-    mailHelpline: (String) -> Unit,
-    homeCardClicked: (HomeCardItem) -> Unit,
+    callHelpline: () -> Unit,
+    mailHelpline: () -> Unit,
+    onNavigate: (HomeDestinations) -> Unit,
 ) {
     val scrollState = rememberScrollState()
 
@@ -175,7 +177,7 @@ private fun HomeContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        HomeCards(homeCardClicked = homeCardClicked, homeCards = homeCards)
+        HomeCards(onNavigate = onNavigate, homeCards = homeCards)
 
         ContactUsRow(callHelpline = callHelpline, mailHelpline = mailHelpline)
     }
@@ -185,9 +187,11 @@ private fun HomeContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeCards(
-    homeCardClicked: (HomeCardItem) -> Unit,
+    onNavigate: (HomeDestinations) -> Unit,
     homeCards: List<HomeCardItem>
 ) {
+    var showTransferDialog by rememberSaveable { mutableStateOf(false) }
+
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         maxItemsInEachRow = 3,
@@ -200,9 +204,23 @@ private fun HomeCards(
                     .padding(bottom = 8.dp),
                 titleId = card.titleId,
                 drawableResId = card.drawableResId,
-                onClick = { homeCardClicked(card) }
+                onClick = {
+                    if(card == HomeCardItem.TransferCard) {
+                        showTransferDialog = true
+                    } else {
+                        onNavigate(card.toDestination())
+                    }
+                }
             )
         }
+    }
+
+    if(showTransferDialog) {
+        TransferDialog(
+            onDismissRequest = { showTransferDialog = false },
+            navigateToTransfer = { onNavigate(HomeDestinations.TRANSFER) },
+            navigateToThirdPartyTransfer = {  onNavigate(HomeDestinations.THIRD_PARTY_TRANSFER) }
+        )
     }
 }
 
@@ -337,8 +355,8 @@ private fun AccountOverviewCard(
 
 @Composable
 private fun ContactUsRow(
-    callHelpline: (String) -> Unit,
-    mailHelpline: (String) -> Unit
+    callHelpline: () -> Unit,
+    mailHelpline: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -384,11 +402,10 @@ fun PreviewHomeContent() {
             totalSavings = {},
             totalLoan = {},
             userProfile = {},
-            homeCardClicked = {},
+            onNavigate = {},
             notificationCount = 0,
             homeCards = listOf(),
             openNotifications = {},
-            navigateItem = {}
         )
     }
 }

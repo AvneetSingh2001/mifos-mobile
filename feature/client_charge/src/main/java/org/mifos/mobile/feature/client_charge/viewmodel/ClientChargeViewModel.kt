@@ -1,5 +1,6 @@
 package org.mifos.mobile.feature.client_charge.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,16 +21,15 @@ import javax.inject.Inject
 @HiltViewModel
 class ClientChargeViewModel @Inject constructor(
     private val clientChargeRepositoryImp: ClientChargeRepository,
-    private val preferencesHelper: PreferencesHelper,
+    val preferencesHelper: PreferencesHelper,
     private val savedStateHandle: SavedStateHandle,
-) :
-    ViewModel() {
+) : ViewModel() {
 
     private val _clientChargeUiState = MutableStateFlow<ClientChargeState>(ClientChargeState.Loading)
     val clientChargeUiState: StateFlow<ClientChargeState> get() = _clientChargeUiState
 
     private val clientId = preferencesHelper.clientId
-    private val chargeType = savedStateHandle.getStateFlow<ChargeType?>(key = Constants.CHARGE_TYPE, initialValue = null)
+    private val chargeTypeString = savedStateHandle.getStateFlow<String?>(key = Constants.CHARGE_TYPE, initialValue = null)
 
     init {
         loadCharges()
@@ -37,7 +37,8 @@ class ClientChargeViewModel @Inject constructor(
 
     fun loadCharges() {
         clientId?.let { clientId ->
-            when (chargeType.value) {
+            val chargeType = chargeTypeString.value?.let { ChargeType.valueOf(it) }
+            when (chargeType) {
                 ChargeType.CLIENT -> loadClientCharges(clientId)
                 ChargeType.SAVINGS -> loadSavingsAccountCharges(clientId)
                 ChargeType.LOAN -> loadLoanAccountCharges(clientId)

@@ -11,18 +11,18 @@ fun NavController.navigateToSettings() {
 }
 
 fun NavGraphBuilder.settingsNavGraph(
-    navigateBack: () -> Unit,
+    navController: NavController,
     navigateToLoginScreen: () -> Unit,
     changePassword: () -> Unit,
     changePasscode: (String) -> Unit,
     languageChanged: () -> Unit
 ) {
     navigation(
-        startDestination = SettingsNavigation.SettingsBase.route,
-        route = SettingsNavigation.SettingsScreen.route,
+        startDestination = SettingsNavigation.SettingsScreen.route,
+        route = SettingsNavigation.SettingsBase.route,
     ) {
         settingsScreenRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
             navigateToLoginScreen = navigateToLoginScreen,
             changePassword = changePassword,
             changePasscode = changePasscode,

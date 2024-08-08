@@ -31,5 +31,4 @@
     <string name="no_app_to_support_action">There is no application that support this action</string>
     <string name="cancel">Cancel</string>
     <string name="dialog_logout">Are you sure you want to logout?</string>
-
 </resources>

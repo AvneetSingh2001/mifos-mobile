@@ -12,16 +12,16 @@ fun NavController.navigateToThirdPartyTransfer() {
 }
 
 fun NavGraphBuilder.thirdPartyTransferNavGraph(
-    navigateBack: () -> Unit,
+    navController: NavController,
     addBeneficiary: () -> Unit,
     reviewTransfer: (ThirdPartyTransferPayload) -> Unit
 ) {
     navigation(
-        startDestination = ThirdPartyTransferNavigation.ThirdPartyTransferBase.route,
-        route = ThirdPartyTransferNavigation.ThirdPartyTransferScreen.route,
+        startDestination = ThirdPartyTransferNavigation.ThirdPartyTransferScreen.route,
+        route = ThirdPartyTransferNavigation.ThirdPartyTransferBase.route,
     ) {
         thirdPartyTransferRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
             addBeneficiary = addBeneficiary,
             reviewTransfer = reviewTransfer
         )

@@ -7,18 +7,18 @@ import androidx.navigation.navigation
 import org.mifos.mobile.feature.notification.NotificationScreen
 
 fun NavController.navigateToNotificationScreen() {
-    navigate(NotificationNavigation.NotificationBase.route)
+    navigate(NotificationNavigation.NotificationScreen.route)
 }
 
 fun NavGraphBuilder.notificationNavGraph(
-    navigateBack: () -> Unit,
+    navController: NavController
 ) {
     navigation(
-        startDestination = NotificationNavigation.NotificationBase.route,
-        route = NotificationNavigation.NotificationScreen.route,
+        startDestination = NotificationNavigation.NotificationScreen.route,
+        route = NotificationNavigation.NotificationBase.route,
     ) {
         notificationScreenRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
         )
     }
 }

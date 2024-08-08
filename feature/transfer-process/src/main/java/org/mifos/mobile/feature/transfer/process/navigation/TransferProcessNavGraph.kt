@@ -8,18 +8,18 @@ import org.mifos.mobile.feature.transfer.process.TransferProcessScreen
 
 // Navigation Setup
 fun NavController.navigateToTransferProcessScreen() {
-    navigate(TransferProcessNavigation.TransferProcessBase.route)
+    navigate(TransferProcessNavigation.TransferProcessScreen.route)
 }
 
 fun NavGraphBuilder.transferProcessNavGraph(
-    navigateBack: () -> Unit,
+    navController: NavController
 ) {
     navigation(
-        startDestination = TransferProcessNavigation.TransferProcessBase.route,
-        route = TransferProcessNavigation.TransferProcessScreen.route,
+        startDestination = TransferProcessNavigation.TransferProcessScreen.route,
+        route = TransferProcessNavigation.TransferProcessBase.route,
     ) {
         transferProcessScreenRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
         )
     }
 }

@@ -27,10 +27,6 @@ class SavingsAccountWithdrawFragment : BaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        (activity as? SavingsAccountContainerActivity)?.hideToolbar()
-        arguments?.getCheckedParcelable(SavingsWithAssociations::class.java, SAVINGS_ACCOUNTS)?.let {
-            viewModel.setContent(it)
-        }
     }
 
     override fun onCreateView(
@@ -43,7 +39,6 @@ class SavingsAccountWithdrawFragment : BaseFragment() {
             setContent {
                 MifosMobileTheme {
                     SavingsAccountWithdrawScreen(
-                        withdraw = { viewModel.submitWithdrawSavingsAccount(it) },
                         navigateBack = { withdrawSuccess ->
                             if (withdrawSuccess) {
                                 activity?.finish()

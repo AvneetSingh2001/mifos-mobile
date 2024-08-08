@@ -11,15 +11,15 @@ fun NavController.navigateToUserProfile() {
 }
 
 fun NavGraphBuilder.userProfileNavGraph(
-    navigateBack: () -> Unit,
+    navController: NavController,
     navigateToChangePassword: () -> Unit
 ) {
     navigation(
-        startDestination = UserProfileNavigation.UserProfileBase.route,
-        route = UserProfileNavigation.UserProfileScreen.route,
+        startDestination = UserProfileNavigation.UserProfileScreen.route,
+        route = UserProfileNavigation.UserProfileBase.route,
     ) {
         userProfileRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
             navigateToChangePassword = navigateToChangePassword
         )
     }

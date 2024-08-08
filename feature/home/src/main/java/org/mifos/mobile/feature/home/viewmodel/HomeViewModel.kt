@@ -23,8 +23,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val homeRepositoryImp: HomeRepository,
-    private val preferencesHelper: PreferencesHelper
+    val homeRepositoryImp: HomeRepository,
+    val preferencesHelper: PreferencesHelper
 ) : ViewModel() {
 
     private val _homeUiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)

@@ -16,26 +16,23 @@ import org.mifos.mobile.core.common.Constants.LOAN_ID
 import org.mifos.mobile.feature.guarantor.navigation.GuarantorRoute.GUARANTOR_NAVIGATION_ROUTE_BASE
 
 
-fun NavController.navigateToGuarantorList(loanId: Long) {
-    navigate("$GUARANTOR_NAVIGATION_ROUTE_BASE/$loanId")
+fun NavController.navigateToGuarantorScreen(loanId: Long) {
+    navigate(GuarantorNavigation.GuarantorScreenBase.passArguments(loanId = loanId.toString()))
 }
 
 fun NavGraphBuilder.guarantorNavGraph(
-    startDestination: String,
     navController: NavHostController,
-    navigateBack: () -> Unit,
 ) {
     navigation(
-        startDestination = startDestination,
-        route = GUARANTOR_NAVIGATION_ROUTE_BASE,
-        arguments = listOf(navArgument(LOAN_ID) { type = NavType.LongType })
+        startDestination = GuarantorNavigation.GuarantorList.route,
+        route = GuarantorNavigation.GuarantorScreenBase.route,
     ) {
         addGuarantorRoute(
-            navigateBack = { navController.popBackStack() }
+            navigateBack = navController::popBackStack,
         )
 
         listGuarantorRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
             addGuarantor = { loanId ->
                 navController.navigate(
                     GuarantorNavigation.GuarantorAdd.passArguments(
@@ -55,7 +52,7 @@ fun NavGraphBuilder.guarantorNavGraph(
         )
 
         detailGuarantorRoute(
-            navigateBack = { navController.popBackStack() },
+            navigateBack = navController::popBackStack,
             updateGuarantor = { index, loanId ->
                 navController.navigate(
                     GuarantorNavigation.GuarantorAdd.passArguments(
@@ -76,7 +73,7 @@ fun NavGraphBuilder.listGuarantorRoute(
     composable(
         route = GuarantorNavigation.GuarantorList.route,
         arguments = listOf(
-            navArgument(name = LOAN_ID) { type = NavType.LongType }
+            navArgument(name = LOAN_ID) { type = NavType.StringType }
         )
     ) {
         GuarantorListScreen(

@@ -12,22 +12,27 @@ import androidx.navigation.compose.navigation
 import org.mifos.mobile.core.common.Constants
 import org.mifos.mobile.core.model.enums.AboutUsListItemId
 import org.mifos.mobile.feature.about.ui.AboutUsScreen
+import org.mifos.mobile.feature.about.ui.PrivacyPolicyScreen
 
 fun NavController.navigateToAboutUsScreen() {
-    navigate(AboutUsNavigation.AboutUsBase.route)
+    navigate(AboutUsNavigation.AboutUsScreen.route)
 }
 
 fun NavGraphBuilder.aboutUsNavGraph(
-    navigateToPrivacyPolicy: () -> Unit,
+    navController: NavController,
     navigateToOssLicense: () -> Unit
 ) {
     navigation(
-        startDestination = AboutUsNavigation.AboutUsBase.route,
-        route = AboutUsNavigation.AboutUsScreen.route,
+        startDestination = AboutUsNavigation.AboutUsScreen.route,
+        route = AboutUsNavigation.AboutUsBase.route,
     ) {
         aboutUsScreenRoute(
-            navigateToPrivacyPolicy = navigateToPrivacyPolicy,
+            navigateToPrivacyPolicy = { navController.navigate(AboutUsNavigation.PrivacyPolicyScreen.route) },
             navigateToOssLicense = navigateToOssLicense
+        )
+
+        privacyPolicyScreenRoute(
+            navigateBack = navController::popBackStack
         )
     }
 }
@@ -50,6 +55,18 @@ fun NavGraphBuilder.aboutUsScreenRoute(
                     navigateToPrivacyPolicy = navigateToPrivacyPolicy
                 )
             }
+        )
+    }
+}
+
+fun NavGraphBuilder.privacyPolicyScreenRoute(
+    navigateBack: () -> Unit
+) {
+    composable(
+        route = AboutUsNavigation.PrivacyPolicyScreen.route,
+    ) {
+        PrivacyPolicyScreen(
+            navigateBack = navigateBack
         )
     }
 }

@@ -13,20 +13,24 @@ import org.mifos.mobile.feature.help.HelpScreen
 import org.mifos.mobile.feature.help.R
 
 fun NavController.navigateToHelpScreen() {
-    navigate(HelpNavigation.HelpBase.route)
+    navigate(HelpNavigation.HelpScreen.route)
 }
 
 fun NavGraphBuilder.helpNavGraph(
     findLocations: () -> Unit,
     navigateBack: () -> Unit,
+    callHelpline: () -> Unit,
+    mailHelpline: () -> Unit
 ) {
     navigation(
-        startDestination = HelpNavigation.HelpBase.route,
-        route = HelpNavigation.HelpScreen.route,
+        startDestination = HelpNavigation.HelpScreen.route,
+        route = HelpNavigation.HelpBase.route,
     ) {
         helpScreenRoute(
             findLocations = findLocations,
             navigateBack = navigateBack,
+            callHelpline = callHelpline,
+            mailHelpline = mailHelpline
         )
     }
 }
@@ -34,39 +38,19 @@ fun NavGraphBuilder.helpNavGraph(
 fun NavGraphBuilder.helpScreenRoute(
     findLocations: () -> Unit,
     navigateBack: () -> Unit,
+    callHelpline: () -> Unit,
+    mailHelpline: () -> Unit
 ) {
     composable(
         route = HelpNavigation.HelpScreen.route,
     ) {
         val context = LocalContext.current
         HelpScreen(
-            callNow = { callHelpline(context) },
-            leaveEmail = { mailHelpline(context) },
+            callNow = callHelpline,
+            leaveEmail = mailHelpline,
             findLocations = findLocations,
             navigateBack = navigateBack,
         )
     }
 }
 
-private fun callHelpline(context: Context) {
-    val intent = Intent(Intent.ACTION_DIAL)
-    intent.data = Uri.parse("tel:" + context.getString(R.string.help_line_number))
-    context.startActivity(intent)
-}
-
-private fun mailHelpline(context: Context) {
-    val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:")
-        putExtra(Intent.EXTRA_EMAIL, arrayOf(context.getString(R.string.contact_email)))
-        putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.user_query))
-    }
-    try {
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        Toast.makeText(
-            context,
-            context.getString(R.string.no_app_to_support_action),
-            Toast.LENGTH_SHORT,
-        ).show()
-    }
-}

@@ -11,14 +11,14 @@ fun NavController.navigateToUpdatePassword() {
 }
 
 fun NavGraphBuilder.updatePasswordNavGraph(
-    navigateBack: () -> Unit,
+    navController: NavController,
 ) {
     navigation(
-        startDestination = UpdatePasswordNavigation.UpdatePasswordBase.route,
-        route = UpdatePasswordNavigation.UpdatePasswordScreen.route,
+        startDestination = UpdatePasswordNavigation.UpdatePasswordScreen.route,
+        route = UpdatePasswordNavigation.UpdatePasswordBase.route,
     ) {
         updatePasswordRoute(
-            navigateBack = navigateBack,
+            navigateBack = navController::popBackStack,
         )
     }
 }
